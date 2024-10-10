@@ -3,5 +3,3 @@ Authors:
 Jenna Li (yl3647),
 Isabella Guan (ig276),
 Uma Wang (yw2544)
-Hi i'm uma
-Hi I'm Bella
