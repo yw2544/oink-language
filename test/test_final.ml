@@ -13,7 +13,7 @@ let tests =
   "test suite"
   >::: [
          make_i "process integer" 22 "22";
-         make_s "process string" "hello world" "print 'hello word'";
+         make_s "process string" "hello world" "\"hello world\"";
        ]
 
 let _ = run_test_tt_main tests

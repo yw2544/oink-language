@@ -15,8 +15,8 @@ prog:
 ;
 
 expr:
-| i = INT { Int i }
 | s = STRING {String s}
+| i = INT { Int i }
 | x = FLOAT {Float x}
 | TRUE {Bool true}
 | FALSE {Bool false}
