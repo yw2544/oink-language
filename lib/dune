@@ -1,2 +1,11 @@
 (library
- (name final))
+ (name final)
+ (modules ast parser lexer main_utils)
+)
+( menhir
+ (modules parser))
+
+(rule
+ (targets lexer.ml)
+ (deps lexer.mll)
+ (action (run ocamllex %{deps})))

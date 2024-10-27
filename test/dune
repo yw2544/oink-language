@@ -1,4 +1,4 @@
 (test
  (name test_final)
- (libraries ounit2)
+ (libraries ounit2 final)
  )
