@@ -28,9 +28,14 @@ rule read =
     | '"' {read_string (Buffer.create 17) lexbuf}
     | "true" {TRUE}
     | "false" {FALSE}
+    | "oink" {OINK}
+    | "=" {EQ}
+    | "mud" {MUD}
+    | id { IDENT (Lexing.lexeme lexbuf) }
     | int { INT (int_of_string (Lexing.lexeme lexbuf )) }
     | float {FLOAT (float_of_string (Lexing.lexeme lexbuf))}
     | eof { EOF }
+
 
 and read_string buf =
     parse
