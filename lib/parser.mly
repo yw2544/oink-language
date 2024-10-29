@@ -8,7 +8,8 @@
 %token TRUE
 %token FALSE
 %token EOF
-
+%token AND
+%token OR
 
 
 %start <Ast.expr> prog
@@ -26,8 +27,10 @@ expr:
 | s = STRING {String s}
 | i = INT { Int i }
 | x = FLOAT {Float x}
-| TRUE {Bool true}
-| FALSE {Bool false}
+| TRUE {Boolean true}
+| FALSE {Boolean false}
+| e1=expr AND e2=expr { And (e1, e2) }
+| e1=expr OR e2=expr { Or (e1, e2) }
 
 ;
 

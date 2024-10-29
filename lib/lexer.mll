@@ -28,6 +28,8 @@ rule read =
     | '"' {read_string (Buffer.create 17) lexbuf}
     | "true" {TRUE}
     | "false" {FALSE}
+    | "and" {AND}
+    | "or" {OR}
     | "oink" {OINK}
     | "=" {EQ}
     | "mud" {MUD}

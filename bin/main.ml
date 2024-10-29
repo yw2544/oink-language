@@ -19,6 +19,18 @@ let pig_translate (ast : expr) : string =
       let pig_words_string = String.concat " " pig_words in
       let result = "*SNORT*" ^ pig_words_string ^ "*SNORT*" in
       result
+  | And (e1, e2) -> (
+      match (e1, e2) with
+      | Boolean b1, Boolean b2 ->
+          let result = if b1 && b2 then "true" else "false" in
+          "*OINK* And result: " ^ result ^ " *OINK*"
+      | _ -> "*OINK* Type error in And expression! *OINK*")
+  | Or (e1, e2) -> (
+      match (e1, e2) with
+      | Boolean b1, Boolean b2 ->
+          let result = if b1 || b2 then "true" else "false" in
+          "*OINK* Or result: " ^ result ^ " *OINK*"
+      | _ -> "*OINK* Type error in Or expression! *OINK*")
   | _ -> "*SNORT* Sorry, I can only interpret strings now! Oink Oink~"
 
 let main () =
@@ -32,7 +44,8 @@ let main () =
        interpret\n\n\
       \      2) Write a extremely simple oink expression (let expression \
        equivalent). The Syntax is oink n = e1 mud e2.contents.contents. \n\
-      \      3) type 'exit' to quit )): ";
+      \      3) Write a boolean And/Or expression (e.g. true and false).\n\
+      \      4) type 'exit' to quit )): ";
     let input = read_line () in
     if input = "exit" then print_endline "Byebye! Oink oink~"
     else
