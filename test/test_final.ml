@@ -17,6 +17,9 @@ let tests =
          ( "test eval" >:: fun _ ->
            let result = interp "oink x = 3 mud x" in
            assert_equal "3" result );
+         ( "test eval" >:: fun _ ->
+           let result = interp "oink x = oink y = 4 mud y mud x" in
+           assert_equal "4" result );
          ( "test parse" >:: fun _ ->
            assert_equal (Oink ("x", Int 3, Int 3)) (parse "oink x = 3 mud 3") );
          ( "test parse" >:: fun _ ->
