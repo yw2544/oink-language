@@ -31,7 +31,7 @@ rule read =
     | "oink" {OINK}
     | "=" {EQ}
     | "mud" {MUD}
-    | id { IDENT (Lexing.lexeme lexbuf) }
+    | id { print_endline ("Token: IDENT (" ^ Lexing.lexeme lexbuf ^ ")"); IDENT (Lexing.lexeme lexbuf) }
     | int { INT (int_of_string (Lexing.lexeme lexbuf )) }
     | float {FLOAT (float_of_string (Lexing.lexeme lexbuf))}
     | eof { EOF }

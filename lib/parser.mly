@@ -12,6 +12,7 @@
 
 
 %start <Ast.expr> prog
+%type <Ast.expr> expr
 
 %%
 
@@ -20,7 +21,8 @@ prog:
 ;
 
 expr:
-| OINK id = IDENT; EQ; e1 = expr; MUD; e2 = expr {Oink (id, e1, e2)}
+| OINK id = IDENT EQ e1 = expr MUD e2 = expr { print_endline "Matched OINK"; Oink (id, e1, e2) }
+| id=IDENT { Ident id }
 | s = STRING {String s}
 | i = INT { Int i }
 | x = FLOAT {Float x}
