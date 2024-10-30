@@ -1,3 +1,55 @@
+commit 613d2b9e50a40ec753b04c0ff04e3ccfc57f6500
+Author: ig276 <ig276@cornell.edu>
+Date:   Wed Oct 30 01:21:00 2024 -0400
+
+    install instruction updated with required installation and step instructions for running the program
+
+commit 8a449b16ae4fba2c914218b0dcabd67d148ef91c
+Author: Uma <yw2544@cornell.edu>
+Date:   Tue Oct 29 17:46:13 2024 -0400
+
+    I'm Uma and I implement some functionality about boolean evaluation. (and and or)
+
+commit 84a94aa903e777220d602f6662666254049fbce4
+Author: yl3647 <yl3647@cornell.edu>
+Date:   Tue Oct 29 02:19:00 2024 -0400
+
+    Added to driver demo to include oink expressions
+    - main is not in a polished state
+
+commit 022eab123e868178d6179dbb2c2003d2e66efe8e
+Author: yl3647 <yl3647@cornell.edu>
+Date:   Tue Oct 29 01:53:18 2024 -0400
+
+    Added test case for nested oink expressions
+
+commit f91d026a55a15a71941df0b7f6cea510566b0815
+Author: yl3647 <yl3647@cornell.edu>
+Date:   Tue Oct 29 01:52:44 2024 -0400
+
+    Capable of parsing and evaluating our equivalent of let expressions
+    - please disregard previous commit saying interp is not working (I tested wrong)
+
+commit 2ffa0f251a136980ae2728423bdf139048ecd5ae
+Author: yl3647 <yl3647@cornell.edu>
+Date:   Tue Oct 29 01:48:05 2024 -0400
+
+    Capable of parsing let expressions
+    - tested the parsing of let expressions
+    - also implemented step (but currently not working)
+
+commit 4dafd921e04277ca77119c6ed589b50b42308687
+Author: yl3647 <yl3647@cornell.edu>
+Date:   Mon Oct 28 12:44:44 2024 -0400
+
+    Added our equivalent of let expressions to lexer, parser and ast
+
+commit 9336f386c99acbc6de91b52734d33edbf715a1f7
+Author: ig276 <ig276@cornell.edu>
+Date:   Sun Oct 27 19:34:01 2024 -0400
+
+    implemented driver program to interact with string parsing function with pig interpreter
+
 commit dbd8a74680a4d01c982733a1ff824a1bc7b0a3fe
 Author: ig276 <ig276@cornell.edu>
 Date:   Sun Oct 27 17:40:30 2024 -0400
