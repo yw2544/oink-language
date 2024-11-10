@@ -11,8 +11,23 @@ let print_pig () =
   print_endline "      (__)\\\\       )\\/\\";
   print_endline "          ||----w |"
 
-(*implement pigify later*)
-let pigify s = s
+let pigify (s : string) : string =
+  let is_vowel c = List.mem c [ 'a'; 'e'; 'i'; 'o'; 'u'; 'y' ] in
+  let len = String.length s in
+  if len = 0 then s
+  else
+    let rec find_first_vowel i =
+      if i >= len then -1
+      else if is_vowel s.[i] then i
+      else find_first_vowel (i + 1)
+    in
+    match find_first_vowel 0 with
+    | -1 -> s ^ "yay"
+    | 0 -> s ^ "yay"
+    | pos ->
+        let prefix = String.sub s 0 pos in
+        let suffix = String.sub s pos (len - pos) in
+        suffix ^ prefix ^ "ay"
 
 let pig_translate (ast : expr) : string =
   match ast with
@@ -37,10 +52,10 @@ let pig_translate (ast : expr) : string =
   | Ident id -> (
       try
         match StringMap.find id !symbol_table with
-        | String s -> pigify s
-        | Int i -> pigify string_of_int i
-        | Float f -> pigify string_of_float f
-        | Boolean b -> pigify (string_of_bool b)
+        | String s -> "*SNORT* " ^ s ^ " *SNORT*"
+        | Int i -> "*SNORT* " ^ string_of_int i ^ " *SNORT*"
+        | Float f -> "*SNORT* " ^ string_of_float f ^ " *SNORT*"
+        | Boolean b -> "*SNORT* " ^ string_of_bool b ^ " *SNORT*"
         | _ -> "*SNORT* Sorry, I can't understand that yet! Oink Oink~"
       with Not_found -> "*SNORT* Unbound identifier: " ^ id ^ " *SNORT*")
   | Oink (id, e1, e2) ->
@@ -65,12 +80,13 @@ let main () =
   let rec repl () =
     print_string
       "You may do one of the following:\n\
-      \      1) Enter a string with quotes (e.g. \"hi\"))for piggy to \
-       interpret\n\n\
-      \      2) Write a extremely simple oink expression (let expression \
-       equivalent). The Syntax is oink n = e1 mud e2.contents.contents. \n\
-      \      3) Write a boolean And/Or expression (e.g. true and false).\n\
-      \      4) type 'exit' to quit )): ";
+       1) Enter a string with quotes (e.g. \"hi\"))for piggy to interpret\n\
+       2) Write a extremely simple oink expression (let expression \
+       equivalent). The Syntax is oink n = e1 mud e2. \n\
+      \   a) After defining an identifier, can print out the identifier value \
+       by simplying type in the identifier name\n\
+       3) Write a boolean And/Or expression (e.g. true and false).\n\
+       4) type 'exit' to quit )): ";
     let input = read_line () in
     if input = "exit" then print_endline "Byebye! Oink oink~"
     else
