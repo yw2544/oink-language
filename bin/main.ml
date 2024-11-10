@@ -1,6 +1,9 @@
 open Final.Main_utils
 open Final.Ast
 open Printf
+module StringMap = Map.Make (String)
+
+let symbol_table = ref StringMap.empty
 
 let print_pig () =
   print_endline "  \\   ^__^";
@@ -31,7 +34,29 @@ let pig_translate (ast : expr) : string =
           let result = if b1 || b2 then "true" else "false" in
           "*OINK* Or result: " ^ result ^ " *OINK*"
       | _ -> "*OINK* Type error in Or expression! *OINK*")
-  | _ -> "*SNORT* Sorry, I can only interpret strings now! Oink Oink~"
+  | Ident id -> (
+      try
+        match StringMap.find id !symbol_table with
+        | String s -> pigify s
+        | Int i -> pigify string_of_int i
+        | Float f -> pigify string_of_float f
+        | Boolean b -> pigify (string_of_bool b)
+        | _ -> "*SNORT* Sorry, I can't understand that yet! Oink Oink~"
+      with Not_found -> "*SNORT* Unbound identifier: " ^ id ^ " *SNORT*")
+  | Oink (id, e1, e2) ->
+      let value = eval e1 in
+      symbol_table := StringMap.add id value !symbol_table;
+      let value_str =
+        match value with
+        | String s -> s
+        | Int i -> string_of_int i
+        | Float f -> string_of_float f
+        | Boolean b -> string_of_bool b
+        | _ -> "Not supported value type"
+      in
+      "*OINK* Identifier " ^ id ^ " defined as " ^ value_str ^ " ! *OINK*"
+  | _ ->
+      "*SNORT* Sorry, I can only interpret strings and boolean now! Oink Oink~"
 
 let main () =
   print_endline "Welcome to the Pig Interpreter! Oink oink~";
@@ -50,11 +75,11 @@ let main () =
     if input = "exit" then print_endline "Byebye! Oink oink~"
     else
       try
-        let interped = interp input in
-        print_endline ("result: " ^ interped);
+        (*let interped = interp input in print_endline ("result: " ^
+          interped);*)
         let parsed = parse input in
-        let piggy_words = pig_translate parsed in
-        print_endline piggy_words;
+        let piggy_result = pig_translate parsed in
+        print_endline piggy_result;
         print_pig ();
         repl ()
       with
