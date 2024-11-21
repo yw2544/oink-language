@@ -26,11 +26,15 @@ rule read =
     | white {read lexbuf}
     | newline {next_line lexbuf; read lexbuf}
     | '"' {read_string (Buffer.create 17) lexbuf}
+    | "#" {GATE}
+    | "baaa" {BAAA}
     | "true" {TRUE}
     | "false" {FALSE}
     | "and" {AND}
     | "or" {OR}
+    | "workhorse"{WORKHORSE}
     | "oink" {OINK}
+    | "go!"{GO}
     | "=" {EQ}
     | "mud" {MUD}
     (*| id { print_endline ("Token: IDENT (" ^ Lexing.lexeme lexbuf ^ ")"); IDENT (Lexing.lexeme lexbuf) }*)
@@ -53,3 +57,5 @@ and read_string buf =
     | [^ '"' '\\']+ {Buffer.add_string buf (Lexing.lexeme lexbuf); read_string buf lexbuf}
     | _ {raise (SyntaxError ("Illegal string character: " ^ Lexing.lexeme lexbuf))}
     | eof {raise (SyntaxError ("Non-terminating string"))}
+
+

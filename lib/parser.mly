@@ -1,5 +1,9 @@
 %token OINK
+%token WORKHORSE
+%token BAAA
+%token GO
 %token <string> IDENT
+%token <string> MOT
 %token EQ
 %token MUD
 %token <int> INT
@@ -22,8 +26,11 @@ prog:
 ;
 
 expr:
-(*| OINK id = IDENT EQ e1 = expr MUD e2 = expr { print_endline "Matched OINK"; Oink (id, e1, e2) }*)
-| OINK id = IDENT EQ e1 = expr MUD e2 = expr {Oink (id, e1, e2) }
+| OINK id = IDENT EQ e1 = expr MUD e2 = expr {Oink (id, e1, e2)}
+| OINK id = IDENT EQ e1 = expr {OinkGlob (id, e1)}
+| WORKHORSE id = IDENT mot = MOT GATE body=expr BAAA return=expr GATE {OinkGlob (id,Workhorse (mot,body,return))}
+| WORKHORSE mot = MOT GATE body=expr BAAA return=expr GATE {Workhorse (mot,body,return)}
+| GO f = expr {Go f}
 | id=IDENT { Ident id }
 | s = STRING {String s}
 | i = INT { Int i }
