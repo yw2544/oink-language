@@ -2,6 +2,7 @@
 %token WORKHORSE
 %token BAAA
 %token GO
+%token GATE
 %token <string> IDENT
 %token <string> MOT
 %token EQ
@@ -14,6 +15,7 @@
 %token EOF
 %token AND
 %token OR
+%token SEP
 
 
 %start <Ast.expr> prog
@@ -27,10 +29,10 @@ prog:
 
 expr:
 | OINK id = IDENT EQ e1 = expr MUD e2 = expr {Oink (id, e1, e2)}
-| OINK id = IDENT EQ e1 = expr {OinkGlob (id, e1)}
+| OINK id = IDENT EQ e1 = expr SEP {OinkGlob (id, e1)}
 | WORKHORSE id = IDENT mot = MOT GATE body=expr BAAA return=expr GATE {OinkGlob (id,Workhorse (mot,body,return))}
 | WORKHORSE mot = MOT GATE body=expr BAAA return=expr GATE {Workhorse (mot,body,return)}
-| GO f = expr {Go f}
+| GO id=IDENT x=expr {Go (id,x)}
 | id=IDENT { Ident id }
 | s = STRING {String s}
 | i = INT { Int i }

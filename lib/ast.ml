@@ -1,4 +1,5 @@
 type expr =
+  | Squeal
   | Int of int
   | String of string
   | Float of float
@@ -10,6 +11,7 @@ type expr =
   | And of expr * expr
   | Or of expr * expr
   | Workhorse of string * expr * expr
-  | Go of expr
+  | Go of string * expr
+
 
 (* type statement = Oink of string * expr * expr *)

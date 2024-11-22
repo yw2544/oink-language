@@ -37,6 +37,7 @@ rule read =
     | "go!"{GO}
     | "=" {EQ}
     | "mud" {MUD}
+    | ";" {SEP}
     (*| id { print_endline ("Token: IDENT (" ^ Lexing.lexeme lexbuf ^ ")"); IDENT (Lexing.lexeme lexbuf) }*)
     | id { IDENT (Lexing.lexeme lexbuf) }
     | int { INT (int_of_string (Lexing.lexeme lexbuf )) }
