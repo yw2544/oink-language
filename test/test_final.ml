@@ -55,6 +55,28 @@ let tests =
            let evaluated = interp "go! example 3" in
            assert_equal "Squeal" result ~printer:(fun x -> x);
            assert_equal "3" evaluated ~printer:(fun x -> x) );
+         ( "test workhorse containing oink no mud" >:: fun _ ->
+           let result = interp "workhorse example x # oink y = 4; baaa y#" in
+           let evaluated = interp "go! example 3" in
+           assert_equal "Squeal" result ~printer:(fun x -> x);
+           assert_equal "4" evaluated ~printer:(fun x -> x) );
+         ( "test workhorse nested" >:: fun _ ->
+           let result =
+             interp
+               "workhorse example x # workhorse exp y #4 baaa y# baaa go! exp \
+                4#"
+           in
+           let evaluated = interp "go! example 3" in
+           assert_equal "Squeal" result ~printer:(fun x -> x);
+           assert_equal "4" evaluated ~printer:(fun x -> x) );
+         ( "test workhorse alternate definition. oink + anonymous function"
+         >:: fun _ ->
+           let result =
+             interp "oink test = workhorse x # oink y = 14; baaa y#;"
+           in
+           let evaluated = interp "go! test 3" in
+           assert_equal "Squeal" result ~printer:(fun x -> x);
+           assert_equal "14" evaluated ~printer:(fun x -> x) );
          ( "test workhorse anonymous" >:: fun _ ->
            let result = interp "workhorse x #x baaa x#" in
            assert_equal "workhorse input:x" result ~printer:(fun x -> x) );
