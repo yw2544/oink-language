@@ -5,9 +5,11 @@ let global_env = Hashtbl.create 100
 
 (**[parse s] parses [s] into an AST.*)
 let parse (s : string) : expr =
+  print_endline "reaaaached parse";
   let lexbuf = Lexing.from_string s in
   let ast = Parser.prog Lexer.read lexbuf in
-  print_endline "reached parse";
+  print_endline "reaaaached parse";
+
   ast
 
 (**[string_of_val e] converts [e] to a string Requires: [e] is a value.*)
@@ -22,13 +24,14 @@ let string_of_val (e : expr) : string =
   | And (e1, e2) -> "and"
   | Or (e1, e2) -> "or"
   | Squeal -> "Squeal"
+  | Workhorse (x,body,ret) -> "workhorse input:" ^ x 
   | _ -> "currently unsupported"
 
 (** [is_value e] is whether [e] is a value*)
 let is_value : expr -> bool = function
   |Squeal | Int _ | Float _ | String _ | Boolean _ | Workhorse _-> true
   | Oink _ |OinkGlob _| Go _ | And _ | Or _ -> false
-  | Ident _ |Mot _-> false
+  | Ident _-> false
 
 type valTypes =
   | Int
@@ -84,7 +87,7 @@ let rec step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
         let value = step e1 env in
         oink_sub id value e2
   | OinkGlob (id, e1) -> Hashtbl.add env id e1; print_endline "addeeeed";Squeal
-  | Workhorse (mot,body,return) -> Workhorse (mot,body,return)
+  (* | Workhorse (mot,body,return) -> Squeal *)
   | Go (id,e1) -> apply id e1 env
   
   | _ -> failwith "unsupported step"
@@ -112,6 +115,7 @@ apply id value outer_env =
     failwith ("apply: Function ID not found: " ^ id)
 (**[eval e] fully evaluates [e] to a value [v].*)
 let rec eval (e : expr) (env:(string, expr) Hashtbl.t) : expr = 
+  print_endline "in evaaaaallll";
   if is_value e then e 
   
   else eval (step e env) env

@@ -34,6 +34,12 @@ let tests =
            let result2 = interp "x" in
            assert_equal "11" result2 ~printer:(fun x -> x);
            assert_equal "Squeal" result ~printer:(fun x -> x) );
+         ( "test workhorse" >:: fun _ ->
+           let result = interp "workhorse example x #x baaa x#" in
+           assert_equal "Squeal" result ~printer:(fun x -> x) );
+         ( "test workhorse" >:: fun _ ->
+           let result = interp "workhorse x #x baaa x#" in
+           assert_equal "workhorse input:x" result ~printer:(fun x -> x) );
        ]
 
 let _ = run_test_tt_main tests
