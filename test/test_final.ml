@@ -34,10 +34,28 @@ let tests =
            let result2 = interp "x" in
            assert_equal "11" result2 ~printer:(fun x -> x);
            assert_equal "Squeal" result ~printer:(fun x -> x) );
+         ( "test oink no mud" >:: fun _ ->
+           let result = interp "oink x = 3;" in
+           assert_equal "Squeal" result ~printer:(fun x -> x) );
+         ( "test oink no mud evaluated" >:: fun _ ->
+           let result = interp "oink x = 11;" in
+           let result2 = interp "x" in
+           assert_equal "11" result2 ~printer:(fun x -> x);
+           assert_equal "Squeal" result ~printer:(fun x -> x) );
          ( "test workhorse" >:: fun _ ->
            let result = interp "workhorse example x #x baaa x#" in
            assert_equal "Squeal" result ~printer:(fun x -> x) );
-         ( "test workhorse" >:: fun _ ->
+         ( "test workhorse evaluated return expr is value" >:: fun _ ->
+           let result = interp "workhorse example x #6 baaa 3#" in
+           let evaluated = interp "go! example 3" in
+           assert_equal "Squeal" result ~printer:(fun x -> x);
+           assert_equal "3" evaluated ~printer:(fun x -> x) );
+         ( "test workhorse evaluated return expr is not value" >:: fun _ ->
+           let result = interp "workhorse example x #6 baaa x#" in
+           let evaluated = interp "go! example 3" in
+           assert_equal "Squeal" result ~printer:(fun x -> x);
+           assert_equal "3" evaluated ~printer:(fun x -> x) );
+         ( "test workhorse anonymous" >:: fun _ ->
            let result = interp "workhorse x #x baaa x#" in
            assert_equal "workhorse input:x" result ~printer:(fun x -> x) );
        ]
