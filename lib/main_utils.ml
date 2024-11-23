@@ -7,6 +7,7 @@ let global_env = Hashtbl.create 100
 let parse (s : string) : expr =
   let lexbuf = Lexing.from_string s in
   let ast = Parser.prog Lexer.read lexbuf in
+  print_endline "reached parse";
   ast
 
 (**[string_of_val e] converts [e] to a string Requires: [e] is a value.*)
@@ -20,6 +21,7 @@ let string_of_val (e : expr) : string =
   | Ident _ -> "ident"
   | And (e1, e2) -> "and"
   | Or (e1, e2) -> "or"
+  | Squeal -> "Squeal"
   | _ -> "currently unsupported"
 
 (** [is_value e] is whether [e] is a value*)
@@ -34,18 +36,18 @@ type valTypes =
   | String
   | Boolean
 
-let rec oink_sub id value expr =
-  match expr with
-  | Ident x when x = id -> value
-  | Ident x -> Ident x
-  | Oink (x, e1, e2) when x = id -> Oink (x, oink_sub id value e1, e2)
-  | Oink (x, e1, e2) when x <> id ->
-      Oink (x, oink_sub id value e1, oink_sub id value e2)
-  | And (e1, e2) -> And (oink_sub id value e1, oink_sub id value e2)
-  | Or (e1, e2) -> Or (oink_sub id value e1, oink_sub id value e2)
-  | _ -> failwith "does not step"
 
-
+  let rec oink_sub id value expr =
+    match expr with
+    | Ident x when x = id -> value
+    | Ident x -> Ident x
+    | Oink (x, e1, e2) when x = id -> Oink (x, oink_sub id value e1, e2)
+    | Oink (x, e1, e2) when x <> id ->
+        Oink (x, oink_sub id value e1, oink_sub id value e2)
+    | And (e1, e2) -> And (oink_sub id value e1, oink_sub id value e2)
+    | Or (e1, e2) -> Or (oink_sub id value e1, oink_sub id value e2)
+    | _ -> failwith "does not step"
+  
 (**[step e] takes a sigle step of evaluation of [e].*)
 let rec step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   match e with
@@ -53,6 +55,7 @@ let rec step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   | Float _ -> failwith "does not step"
   | String _ -> failwith "does not step"
   | Boolean _ -> failwith "does not step"
+  | Ident x -> print_endline "matched with ident";Hashtbl.find env x
   | And (e1, e2) when is_value e1 && is_value e2 -> (
       match (e1, e2) with
       | Boolean b1, Boolean b2 ->
@@ -80,7 +83,7 @@ let rec step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
       else
         let value = step e1 env in
         oink_sub id value e2
-  | OinkGlob (id, e1) -> Hashtbl.add env id e1; Squeal
+  | OinkGlob (id, e1) -> Hashtbl.add env id e1; print_endline "addeeeed";Squeal
   | Workhorse (mot,body,return) -> Workhorse (mot,body,return)
   | Go (id,e1) -> apply id e1 env
   

@@ -26,7 +26,14 @@ let tests =
            assert_equal
              (Oink ("x", Int 3, Ident "x"))
              (parse "oink x = 3 mud x") );
+         ( "test oink no mud" >:: fun _ ->
+           let result = interp "oink x = 3;" in
+           assert_equal "Squeal" result ~printer:(fun x -> x) );
+         ( "test oink no mud evaluated" >:: fun _ ->
+           let result = interp "oink x = 11;" in
+           let result2 = interp "x" in
+           assert_equal "11" result2 ~printer:(fun x -> x);
+           assert_equal "Squeal" result ~printer:(fun x -> x) );
        ]
-
 
 let _ = run_test_tt_main tests
