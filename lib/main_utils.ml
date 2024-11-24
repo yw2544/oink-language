@@ -5,10 +5,8 @@ let global_env = Hashtbl.create 100
 
 (**[parse s] parses [s] into an AST.*)
 let parse (s : string) : expr =
-  print_endline "reaaaached parse";
   let lexbuf = Lexing.from_string s in
   let ast = Parser.prog Lexer.read lexbuf in
-  print_endline "reaaaached parse";
 
   ast
 
@@ -40,30 +38,28 @@ type valTypes =
   | Boolean
 
 
-  let rec oink_sub id value expr =
-    match expr with
-    | Ident x when x = id -> value
-    | Ident x -> Ident x
-    | Oink (x, e1, e2) when x = id -> Oink (x, oink_sub id value e1, e2)
-    | Oink (x, e1, e2) when x <> id ->
-        Oink (x, oink_sub id value e1, oink_sub id value e2)
-    | And (e1, e2) -> And (oink_sub id value e1, oink_sub id value e2)
-    | Or (e1, e2) -> Or (oink_sub id value e1, oink_sub id value e2)
-    | _ -> failwith "does not step"
-  
+let rec oink_sub id value expr outer_env =
+  let oink_env = Hashtbl.copy outer_env in 
+  Hashtbl.add oink_env id value;
+  match expr with
+  | Ident x when x = id -> value
+  | Ident x -> Ident x
+  | Oink (x, e1, e2) when x = id -> Oink (x, oink_sub id value e1 outer_env, e2)
+  | Oink (x, e1, e2) when x <> id ->
+      Oink (x, oink_sub id value e1 outer_env, oink_sub id value e2 outer_env)
+  | expr -> step expr outer_env 
+  (* | And (e1, e2) -> And (oink_sub id value e1 outer_env, oink_sub id value e2 outer_env)
+  | Or (e1, e2) -> Or (oink_sub id value e1 outer_env, oink_sub id value e2 outer_env) *)
+
 (**[step e] takes a sigle step of evaluation of [e].*)
-let rec step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
+and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   match e with
   | Int _ -> failwith "does not step"
   | Float _ -> failwith "does not step"
   | String _ -> failwith "does not step"
   | Boolean _ -> failwith "does not step"
-  | Ident x -> print_endline ("matched with ident. trying to find "^x);
-  let temp = Hashtbl.find env x in
-  (
-    print_endline (string_of_val temp);
-    temp
-  )
+  | Ident x -> Hashtbl.find env x
+
   | And (e1, e2) when is_value e1 && is_value e2 -> (
       match (e1, e2) with
       | Boolean b1, Boolean b2 ->
@@ -87,26 +83,22 @@ let rec step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   | Or (e1, e2) -> Or (step e1 env, e2)
   | Oink (id, e1, e2) ->
       if is_value e2 then e2
-      else if is_value e1 then oink_sub id e1 e2
+      else if is_value e1 then oink_sub id e1 e2 env
       else
         let value = step e1 env in
-        oink_sub id value e2
-  | OinkGlob (id, e1) -> Hashtbl.add env id e1; print_endline ("added: "^id);Squeal
+        oink_sub id value e2 env
+  | OinkGlob (id, e1) -> Hashtbl.add env id e1;Squeal
   (* | Workhorse (mot,body,return) -> Squeal *)
   | Go (id,e1) -> apply id e1 env
   
   | _ -> failwith "unsupported step"
 and
 apply id value outer_env =
-  print_endline "within apply";
   try
-    print_endline "trying to find function";
     let func = Hashtbl.find outer_env id in
-    print_endline "found function";
     let func_env = Hashtbl.copy outer_env in
     match func with
     | Workhorse (mot, body, return_expr) ->
-        print_endline "matched func with workhorse";
         Hashtbl.add func_env mot value;
         if is_value body = false then (
         let _ = step body func_env in
@@ -114,7 +106,6 @@ apply id value outer_env =
         else step return_expr func_env  
           )
       else (
-        print_endline "body is value";
         if is_value return_expr then return_expr
       else 
         
@@ -126,11 +117,8 @@ apply id value outer_env =
     failwith ("apply: Function ID not found: " ^ id^ " or some other error")
 (**[eval e] fully evaluates [e] to a value [v].*)
 let rec eval (e : expr) (env:(string, expr) Hashtbl.t) : expr = 
-  print_endline "in evaaaaallll";
   if is_value e then e 
-  
   else eval (step e env) env
-
 
 (**[interp s] interprets [s] by lexing and parsing it, evaluating it, and
    converting the result to a string.*)
