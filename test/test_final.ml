@@ -51,7 +51,7 @@ let tests =
            assert_equal "Squeal" result ~printer:(fun x -> x);
            assert_equal "3" evaluated ~printer:(fun x -> x) );
          ( "test workhorse evaluated return expr is not value" >:: fun _ ->
-           let result = interp "workhorse example x #6 baaa x#" in
+           let result = interp "workhorse example x # baaa x#" in
            let evaluated = interp "go! example 3" in
            assert_equal "Squeal" result ~printer:(fun x -> x);
            assert_equal "3" evaluated ~printer:(fun x -> x) );

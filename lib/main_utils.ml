@@ -108,9 +108,7 @@ apply id value outer_env =
       else (
         if is_value return_expr then return_expr
       else 
-        
         step return_expr func_env)
-        
         
     | _ -> failwith "apply: Not a Workhorse function"
   with Not_found ->
