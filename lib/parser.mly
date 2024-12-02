@@ -37,19 +37,21 @@ expr:
 | OINK id = IDENT EQ e1 = expr MUD e2 = expr {Oink (id, e1, e2)}
 | OINK id = IDENT EQ e1 = expr SEP {OinkGlob (id, e1)}
 | PEN_START lst = expr_list PEN_END {Pen lst}
-| WORKHORSE id = IDENT mot = IDENT GATE body=expr BAAA return=expr GATE {OinkGlob (id,Workhorse (mot,body,return))}
-| WORKHORSE id = IDENT mot = IDENT GATE BAAA return=expr GATE {OinkGlob (id,Workhorse (mot,Squeal,return))}
+// various workhorse syntactic suggar
+| WORKHORSE id = IDENT mot = IDENT GATE body=expr BAAA return=expr GATE {OinkGlob (id,Workhorse (Pen [mot],body,return))}
+| WORKHORSE id = IDENT mot = IDENT GATE BAAA return=expr GATE {OinkGlob (id,Workhorse (Pen [mot],Squeal,return))}
 
 | WORKHORSE id = IDENT PEN_START lst = expr_list PEN_END GATE BAAA return=expr GATE {Workhorse (Pen lst,Squeal,return)} 
 | WORKHORSE id = IDENT PEN_START lst = expr_list PEN_END GATE body=expr BAAA return=expr GATE {Workhorse (Pen lst,body,return)} 
 
-| WORKHORSE mot = IDENT GATE body=expr BAAA return=expr GATE {Workhorse (mot,body,return)}
-| WORKHORSE mot = IDENT GATE BAAA return=expr GATE {Workhorse (mot,Squeal,return)}
+| WORKHORSE mot = IDENT GATE body=expr BAAA return=expr GATE {Workhorse (Pen [mot],body,return)}
+| WORKHORSE mot = IDENT GATE BAAA return=expr GATE {Workhorse (Pen [mot],Squeal,return)}
 
 | WORKHORSE PEN_START lst = expr_list PEN_END GATE BAAA return=expr GATE {Workhorse (Pen lst,Squeal,return)} {Pen lst}
 | WORKHORSE PEN_START lst = expr_list PEN_END GATE body=expr BAAA return=expr GATE {Workhorse (Pen lst,body,return)} 
 
-| GO id=IDENT x=expr {Go (id,x)}
+| GO id=IDENT x=expr {Go (id,Pen [x])}
+| GO id= IDENT PEN_START lst = expr_list PEN_END {Go (id, Pen lst)}
 | id=IDENT { Ident id }
 | s = STRING {String s}
 | i = INT { Int i }

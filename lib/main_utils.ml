@@ -22,17 +22,17 @@ let string_of_val (e : expr) : string =
   | And (e1, e2) -> "and"
   | Or (e1, e2) -> "or"
   | Squeal -> "Squeal"
-  | Workhorse (x,body,ret) -> "workhorse input:" ^ x 
+  | Workhorse (Pen x, body, ret) -> "workhorse input: currently can't print"
   | _ -> "currently unsupported"
 
 (** [is_value e] is whether [e] is a value*)
 let is_value : expr -> bool = function
-  |Squeal | Int _ | Float _ | String _ | Boolean _ | Workhorse _ |Pen _-> true
-  | Oink _ |OinkGlob _| Go _ | And _ | Or _ |Ident _-> false
-
+  | Squeal | Int _ | Float _ | String _ | Boolean _ | Workhorse _ | PenVal _ ->
+      true
+  | Oink _ | OinkGlob _ | Go _ | And _ | Or _ | Ident _ | Pen _ -> false
 
 let rec oink_sub id value expr outer_env =
-  let oink_env = Hashtbl.copy outer_env in 
+  let oink_env = Hashtbl.copy outer_env in
   Hashtbl.add oink_env id value;
   match expr with
   | Ident x when x = id -> value
@@ -40,9 +40,10 @@ let rec oink_sub id value expr outer_env =
   | Oink (x, e1, e2) when x = id -> Oink (x, oink_sub id value e1 outer_env, e2)
   | Oink (x, e1, e2) when x <> id ->
       Oink (x, oink_sub id value e1 outer_env, oink_sub id value e2 outer_env)
-  | expr -> step expr outer_env 
-  (* | And (e1, e2) -> And (oink_sub id value e1 outer_env, oink_sub id value e2 outer_env)
-  | Or (e1, e2) -> Or (oink_sub id value e1 outer_env, oink_sub id value e2 outer_env) *)
+  | expr -> step expr outer_env
+(* | And (e1, e2) -> And (oink_sub id value e1 outer_env, oink_sub id value e2
+   outer_env) | Or (e1, e2) -> Or (oink_sub id value e1 outer_env, oink_sub id
+   value e2 outer_env) *)
 
 (**[step e] takes a sigle step of evaluation of [e].*)
 and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
@@ -51,8 +52,8 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   | Float _ -> failwith "does not step"
   | String _ -> failwith "does not step"
   | Boolean _ -> failwith "does not step"
+  | PenVal _ -> failwith "does not step"
   | Ident x -> Hashtbl.find env x
-
   | And (e1, e2) when is_value e1 && is_value e2 -> (
       match (e1, e2) with
       | Boolean b1, Boolean b2 ->
@@ -74,43 +75,54 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
       | _ -> failwith "*OINK* Type error in Or expression! Oink Oink~ *OINK*")
   | Or (e1, e2) when is_value e1 -> Or (e1, step e2 env)
   | Or (e1, e2) -> Or (step e1 env, e2)
+  | Pen lst -> pen_eval lst env
   | Oink (id, e1, e2) ->
       if is_value e2 then e2
       else if is_value e1 then oink_sub id e1 e2 env
       else
         let value = step e1 env in
         oink_sub id value e2 env
-  | OinkGlob (id, e1) -> Hashtbl.add env id e1;Squeal
-  (* | Workhorse (mot,body,return) -> Squeal *)
-  | Go (id,e1) -> apply id e1 env
-  
+  | OinkGlob (id, e1) ->
+      Hashtbl.add env id e1;
+      Squeal
+  | Go (id, PenVal lst) -> apply id lst env
+  | Go (id, Pen lst) -> apply id (pen_eval_lst lst env) env
+  | _ -> failwith "error in Go (function application Pen lst)"
   | _ -> failwith "unsupported step"
-and
-apply id value outer_env =
+
+and apply id apply_lst outer_env =
   try
     let func = Hashtbl.find outer_env id in
     let func_env = Hashtbl.copy outer_env in
     match func with
-    | Workhorse (mot, body, return_expr) ->
-        Hashtbl.add func_env mot value;
-        if is_value body = false then (
-        let _ = step body func_env in
-        if is_value return_expr then return_expr
-        else step return_expr func_env  
-          )
-      else (
-        if is_value return_expr then return_expr
-      else 
-
-        step return_expr func_env)
-        
+    | Workhorse (Pen def_lst, body, return_expr) ->
+        let def_lst_string =
+          List.map
+            (function
+              | Ident id -> id
+              | _ -> failwith "Expected Ident in Pen")
+            def_lst
+        in
+        List.iter2 (Hashtbl.add func_env) def_lst_string apply_lst;
+        if is_value body = false then
+          let _ = step body func_env in
+          if is_value return_expr then return_expr
+          else step return_expr func_env
+        else if is_value return_expr then return_expr
+        else step return_expr func_env
     | _ -> failwith "apply: Not a Workhorse function"
   with Not_found ->
-    failwith ("apply: Function ID not found: " ^ id^ " or some other error")
+    failwith ("apply: Function ID not found: " ^ id ^ " or some other error")
+
+and pen_eval lst env = PenVal (pen_eval_lst lst env)
+
+and pen_eval_lst lst env =
+  let f e = if is_value e then e else step e env in
+  List.map f lst
+
 (**[eval e] fully evaluates [e] to a value [v].*)
-let rec eval (e : expr) (env:(string, expr) Hashtbl.t) : expr = 
-  if is_value e then e 
-  else eval (step e env) env
+let rec eval (e : expr) (env : (string, expr) Hashtbl.t) : expr =
+  if is_value e then e else eval (step e env) env
 
 (**[interp s] interprets [s] by lexing and parsing it, evaluating it, and
    converting the result to a string.*)
@@ -118,4 +130,3 @@ let interp (s : string) : string =
   try s |> parse |> (fun e -> eval e global_env) |> string_of_val with
   | Failure msg -> "Error: " ^ msg
   | _ -> "An unexpected error occurred while interpreting."
-

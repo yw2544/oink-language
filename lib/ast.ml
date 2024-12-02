@@ -9,7 +9,8 @@ type expr =
   | OinkGlob of string * expr
   | And of expr * expr
   | Or of expr * expr
-  | Workhorse of string * expr * expr
+  | Workhorse of expr * expr * expr
   | Go of string * expr
   | Pen of expr list
+  | PenVal of expr list
 (* type statement = Oink of string * expr * expr *)
