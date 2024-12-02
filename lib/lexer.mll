@@ -38,6 +38,9 @@ rule read =
     | "=" {EQ}
     | "mud" {MUD}
     | ";" {SEP}
+    | "," {COMMA}
+    | "["{PEN_START}
+    | "]"{PEN_END}
     (*| id { print_endline ("Token: IDENT (" ^ Lexing.lexeme lexbuf ^ ")"); IDENT (Lexing.lexeme lexbuf) }*)
     | id { IDENT (Lexing.lexeme lexbuf) }
     | int { INT (int_of_string (Lexing.lexeme lexbuf )) }

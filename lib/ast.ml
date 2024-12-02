@@ -11,5 +11,5 @@ type expr =
   | Or of expr * expr
   | Workhorse of string * expr * expr
   | Go of string * expr
-
+  | Pen of expr list
 (* type statement = Oink of string * expr * expr *)

@@ -27,15 +27,8 @@ let string_of_val (e : expr) : string =
 
 (** [is_value e] is whether [e] is a value*)
 let is_value : expr -> bool = function
-  |Squeal | Int _ | Float _ | String _ | Boolean _ | Workhorse _-> true
-  | Oink _ |OinkGlob _| Go _ | And _ | Or _ -> false
-  | Ident _-> false
-
-type valTypes =
-  | Int
-  | Float
-  | String
-  | Boolean
+  |Squeal | Int _ | Float _ | String _ | Boolean _ | Workhorse _ |Pen _-> true
+  | Oink _ |OinkGlob _| Go _ | And _ | Or _ |Ident _-> false
 
 
 let rec oink_sub id value expr outer_env =
@@ -108,6 +101,7 @@ apply id value outer_env =
       else (
         if is_value return_expr then return_expr
       else 
+
         step return_expr func_env)
         
     | _ -> failwith "apply: Not a Workhorse function"
