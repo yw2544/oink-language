@@ -5,9 +5,10 @@ let global_env = Hashtbl.create 100
 
 (**[parse s] parses [s] into an AST.*)
 let parse (s : string) : expr =
+  (* print_endline "start parse"; *)
   let lexbuf = Lexing.from_string s in
   let ast = Parser.prog Lexer.read lexbuf in
-
+  (* print_endline "finished parse"; *)
   ast
 
 (**[string_of_val e] converts [e] to a string Requires: [e] is a value.*)
@@ -23,6 +24,7 @@ let string_of_val (e : expr) : string =
   | Or (e1, e2) -> "or"
   | Squeal -> "Squeal"
   | Workhorse (Pen x, body, ret) -> "workhorse input: currently can't print"
+  | Pen lst -> "pen: unsuported rn"
   | _ -> "currently unsupported"
 
 (** [is_value e] is whether [e] is a value*)
@@ -83,19 +85,30 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
         let value = step e1 env in
         oink_sub id value e2 env
   | OinkGlob (id, e1) ->
+      print_endline ("adding to global env: " ^ id);
       Hashtbl.add env id e1;
       Squeal
-  | Go (id, PenVal lst) -> apply id lst env
-  | Go (id, Pen lst) -> apply id (pen_eval_lst lst env) env
-  | _ -> failwith "error in Go (function application Pen lst)"
+  | Go (id, PenVal lst) ->
+      print_endline "about to call apply";
+      apply id lst env
+  | Go (id, Pen lst) ->
+      print_endline "calling pen eval_lst";
+      let lst = pen_eval_lst lst env in
+      Printf.printf "IN STEP!! The length of apply_lst is %d\n"
+        (List.length lst);
+      apply id lst env
+  | Go (id, x) -> apply id [ x ] env
   | _ -> failwith "unsupported step"
 
 and apply id apply_lst outer_env =
+  print_endline " within apply";
   try
     let func = Hashtbl.find outer_env id in
     let func_env = Hashtbl.copy outer_env in
     match func with
     | Workhorse (Pen def_lst, body, return_expr) ->
+        print_endline "matched with workhorse";
+
         let def_lst_string =
           List.map
             (function
@@ -103,7 +116,16 @@ and apply id apply_lst outer_env =
               | _ -> failwith "Expected Ident in Pen")
             def_lst
         in
-        List.iter2 (Hashtbl.add func_env) def_lst_string apply_lst;
+        print_endline "before adding to env";
+        let add_to_table var_name var_value =
+          Hashtbl.add func_env var_name var_value
+        in
+        List.iter print_endline def_lst_string;
+        let print_element e = print_endline (string_of_val e) in
+        List.iter print_element apply_lst;
+        Printf.printf "The length of apply_lst is %d\n" (List.length apply_lst);
+        List.iter2 add_to_table def_lst_string apply_lst;
+        print_endline "after adding to env";
         if is_value body = false then
           let _ = step body func_env in
           if is_value return_expr then return_expr
@@ -114,10 +136,21 @@ and apply id apply_lst outer_env =
   with Not_found ->
     failwith ("apply: Function ID not found: " ^ id ^ " or some other error")
 
-and pen_eval lst env = PenVal (pen_eval_lst lst env)
+and pen_eval lst env =
+  print_endline "within pen_eval";
+  print_endline "calling pen eval_lst";
+
+  let lst = pen_eval_lst lst env in
+  let print_element e = print_endline (string_of_val e) in
+  List.iter print_element lst;
+  print_endline "fin eval_lst";
+
+  PenVal lst
 
 and pen_eval_lst lst env =
   let f e = if is_value e then e else step e env in
+  Printf.printf "WITHIN PEN_EVAL_LIST The length of input list is %d\n"
+    (List.length lst);
   List.map f lst
 
 (**[eval e] fully evaluates [e] to a value [v].*)
@@ -127,6 +160,7 @@ let rec eval (e : expr) (env : (string, expr) Hashtbl.t) : expr =
 (**[interp s] interprets [s] by lexing and parsing it, evaluating it, and
    converting the result to a string.*)
 let interp (s : string) : string =
+  (* print_endline "in interp"; *)
   try s |> parse |> (fun e -> eval e global_env) |> string_of_val with
   | Failure msg -> "Error: " ^ msg
   | _ -> "An unexpected error occurred while interpreting."
