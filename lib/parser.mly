@@ -17,7 +17,10 @@
 %token SEP
 %token PEN_START
 %token PEN_END
-
+%token PIGPILE 
+%token SNOUTOUT  
+%token MUDMULTIPLY
+%token TROUGHSPLIT
 
 %start <Ast.expr> prog
 %type <Ast.expr> expr
@@ -60,7 +63,10 @@ expr:
 | FALSE {Boolean false}
 | e1=expr AND e2=expr { And (e1, e2) }
 | e1=expr OR e2=expr { Or (e1, e2) }
-
+| e1 = expr PIGPILE e2 = expr { PigPile (e1, e2) }
+| e1 = expr SNOUTOUT e2 = expr { SnoutOut (e1, e2) }
+| e1 = expr MUDMULTIPLY e2 = expr { MudMultiply (e1, e2) }
+| e1 = expr TROUGHSPLIT e2 = expr { TroughSplit (e1, e2) }
 ;
 
 
