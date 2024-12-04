@@ -1,6 +1,8 @@
 (library
  (name final)
  (modules ast parser lexer main_utils)
+ (instrumentation
+  (backend bisect_ppx))
 )
 
 ( menhir
