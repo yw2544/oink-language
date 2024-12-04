@@ -10,6 +10,7 @@ type expr =
   | And of expr * expr
   | Or of expr * expr
   | Workhorse of expr * expr * expr
+  | WorkhorseVal of expr * (string, expr) Hashtbl.t
   | Go of string * expr
   | Pen of expr list
   | PenVal of expr list

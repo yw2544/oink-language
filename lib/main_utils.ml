@@ -29,9 +29,10 @@ let string_of_val (e : expr) : string =
 
 (** [is_value e] is whether [e] is a value*)
 let is_value : expr -> bool = function
-  | Squeal | Int _ | Float _ | String _ | Boolean _ | Workhorse _ | PenVal _ ->
-      true
-  | Oink _ | OinkGlob _ | Go _ | And _ | Or _ | Ident _ | Pen _ -> false
+  | Squeal | Int _ | Float _ | String _ | Boolean _ | WorkhorseVal _ | PenVal _
+    -> true
+  | Oink _ | OinkGlob _ | Go _ | And _ | Or _ | Ident _ | Workhorse _ | Pen _ ->
+      false
 
 let rec oink_sub id value expr outer_env =
   let oink_env = Hashtbl.copy outer_env in
@@ -78,6 +79,8 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   | Or (e1, e2) when is_value e1 -> Or (e1, step e2 env)
   | Or (e1, e2) -> Or (step e1 env, e2)
   | Pen lst -> pen_eval lst env
+  | Workhorse (inputs, body, outputs) ->
+      WorkhorseVal (Workhorse (inputs, body, outputs), Hashtbl.copy env)
   | Oink (id, e1, e2) ->
       if is_value e2 then e2
       else if is_value e1 then oink_sub id e1 e2 env
@@ -86,7 +89,7 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
         oink_sub id value e2 env
   | OinkGlob (id, e1) ->
       print_endline ("adding to global env: " ^ id);
-      Hashtbl.add env id e1;
+      Hashtbl.add env id (eval e1 env);
       Squeal
   | Go (id, PenVal lst) ->
       print_endline "about to call apply";
@@ -94,21 +97,25 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   | Go (id, Pen lst) ->
       print_endline "calling pen eval_lst";
       let lst = pen_eval_lst lst env in
-      Printf.printf "IN STEP!! The length of apply_lst is %d\n"
-        (List.length lst);
       apply id lst env
   | Go (id, x) -> apply id [ x ] env
   | _ -> failwith "unsupported step"
 
-and apply id apply_lst outer_env =
-  print_endline " within apply";
+and apply id apply_lst current_outer =
+  let find_func_and_env () =
+    let func_and_env = Hashtbl.find current_outer id in
+    match func_and_env with
+    | WorkhorseVal (func, func_env) -> (func, func_env)
+    | _ -> failwith "failure in function application"
+  in
+  print_endline "within apply";
   try
-    let func = Hashtbl.find outer_env id in
-    let func_env = Hashtbl.copy outer_env in
+    let func_and_env = find_func_and_env () in
+    let func = fst func_and_env in
+    let func_env = snd func_and_env in
     match func with
     | Workhorse (Pen def_lst, body, return_expr) ->
         print_endline "matched with workhorse";
-
         let def_lst_string =
           List.map
             (function
@@ -126,7 +133,7 @@ and apply id apply_lst outer_env =
         Printf.printf "The length of apply_lst is %d\n" (List.length apply_lst);
         List.iter2 add_to_table def_lst_string apply_lst;
         print_endline "after adding to env";
-        if is_value body = false then
+        if not (is_value body) then
           let _ = step body func_env in
           if is_value return_expr then return_expr
           else step return_expr func_env
@@ -139,12 +146,10 @@ and apply id apply_lst outer_env =
 and pen_eval lst env =
   print_endline "within pen_eval";
   print_endline "calling pen eval_lst";
-
   let lst = pen_eval_lst lst env in
   let print_element e = print_endline (string_of_val e) in
   List.iter print_element lst;
   print_endline "fin eval_lst";
-
   PenVal lst
 
 and pen_eval_lst lst env =
@@ -153,8 +158,7 @@ and pen_eval_lst lst env =
     (List.length lst);
   List.map f lst
 
-(**[eval e] fully evaluates [e] to a value [v].*)
-let rec eval (e : expr) (env : (string, expr) Hashtbl.t) : expr =
+and eval (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   if is_value e then e else eval (step e env) env
 
 (**[interp s] interprets [s] by lexing and parsing it, evaluating it, and

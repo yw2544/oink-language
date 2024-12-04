@@ -77,9 +77,6 @@ let tests =
            let evaluated = interp "go! test 3" in
            assert_equal "Squeal" result ~printer:(fun x -> x);
            assert_equal "14" evaluated ~printer:(fun x -> x) );
-         (* ( "test workhorse anonymous" >:: fun _ -> let result = interp
-            "workhorse x #x baaa x#" in assert_equal "workhorse input:x" result
-            ~printer:(fun x -> x) ); *)
          ( "test workhorse multi input 1st input" >:: fun _ ->
            let func_def = interp "workhorse example [a; b] #baaa a#" in
            let evaluated = interp "go! example [3; 5]" in
@@ -90,6 +87,13 @@ let tests =
            let evaluated = interp "go! example [3; 5]" in
            assert_equal "Squeal" func_def ~printer:(fun x -> x);
            assert_equal "5" evaluated ~printer:(fun x -> x) );
+         ( "test lexical scope of functions" >:: fun _ ->
+           let _ = interp "oink x = 54;" in
+           let func_def = interp "workhorse example [a; b] #baaa x#" in
+           let _ = interp "oink x = 88;" in
+           let evaluated = interp "go! example [3; 5]" in
+           assert_equal "Squeal" func_def ~printer:(fun x -> x);
+           assert_equal "54" evaluated ~printer:(fun x -> x) );
        ]
 
 let _ = run_test_tt_main tests
