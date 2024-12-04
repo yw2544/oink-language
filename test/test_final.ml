@@ -94,6 +94,13 @@ let tests =
            let evaluated = interp "go! example [3; 5]" in
            assert_equal "Squeal" func_def ~printer:(fun x -> x);
            assert_equal "54" evaluated ~printer:(fun x -> x) );
+         ( "test scope of function" >:: fun _ ->
+           let _ = interp "oink x = 54;" in
+           let func_def = interp "workhorse example [x; b] #baaa x#" in
+           let _ = interp "oink x = 88;" in
+           let evaluated = interp "go! example [3; 5]" in
+           assert_equal "Squeal" func_def ~printer:(fun x -> x);
+           assert_equal "3" evaluated ~printer:(fun x -> x) );
        ]
 
 let _ = run_test_tt_main tests
