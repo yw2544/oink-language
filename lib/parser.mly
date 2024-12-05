@@ -21,6 +21,13 @@
 %token SNOUTOUT  
 %token MUDMULTIPLY
 %token TROUGHSPLIT
+%token PENPEN
+%token PPEN
+%token PENSNATCH
+%token PENSQUEAL
+%token PENLENGTH
+%token PENFILTER
+%token PENREAP
 
 %start <Ast.expr> prog
 %type <Ast.expr> expr
@@ -40,8 +47,13 @@ prog:
 expr:
 | OINK id = IDENT EQ e1 = expr MUD e2 = expr {Oink (id, e1, e2)}
 | OINK id = IDENT EQ e1 = expr SEP {OinkGlob (id, e1)}
-| PEN_START lst = expr_list PEN_END {Pen lst}
+| PEN_START PEN_END { Pen [] }  (* Handle empty list *)
+| PEN_START lst = expr_list PEN_END { Pen lst }  (* Handle non-empty list *)
 // various workhorse syntactic suggar
+| WORKHORSE id = IDENT mot = IDENT GATE body=expr BAAA return=expr GATE { 
+    OinkGlob (id, Workhorse (Pen [Ident mot], body, return)) 
+}
+
 | WORKHORSE id = IDENT mot = IDENT GATE body=expr BAAA return=expr GATE {OinkGlob (id,Workhorse (Pen [Ident mot],body,return))}
 | WORKHORSE id = IDENT mot = IDENT GATE BAAA return=expr GATE {OinkGlob (id,Workhorse (Pen [Ident mot],Squeal,return))}
 
@@ -67,6 +79,18 @@ expr:
 | e1 = expr SNOUTOUT e2 = expr { SnoutOut (e1, e2) }
 | e1 = expr MUDMULTIPLY e2 = expr { MudMultiply (e1, e2) }
 | e1 = expr TROUGHSPLIT e2 = expr { TroughSplit (e1, e2) }
+| e1 = expr PENPEN e2 = expr { PenPen (e1, e2) }
+| e1 = expr PPEN e2 = expr { Ppen (e1, e2) }
+| e1 = expr PENSNATCH e2 = expr { PenSnatch (e1, e2) }
+| e = expr PENSQUEAL {
+    print_endline "Parsed PenSqueal operation.";
+    PenSqueal e
+}
+| e1 = expr EQ e2 = expr { Eq (e1, e2) } 
+| e = expr PENLENGTH { PenLength (e) }
+| e1 = expr PENFILTER GO id = IDENT { PenFilter (e1, Go (id, Ident id)) }
+| e1 = expr PENFILTER e2 = expr { PenFilter (e1, e2) }
+| e1 = expr PENREAP e2 = expr { PenReap (e1, e2) }
 ;
 
 

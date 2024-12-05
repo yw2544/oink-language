@@ -36,6 +36,7 @@ rule read =
     | "oink" {OINK}
     | "go!"{GO}
     | "=" {EQ}
+    | "eq" {EQ}
     | "mud" {MUD}
     | ";" {SEP}
     | "["{PEN_START}
@@ -44,6 +45,15 @@ rule read =
     | "snoutout" { SNOUTOUT }
     | "mudmultiply" { MUDMULTIPLY }
     | "troughsplit" { TROUGHSPLIT }
+    | "penpen" { PENPEN }
+    | "ppen" { PPEN }
+    | "pensnatch" { PENSNATCH }
+    | "pensqueal" { PENSQUEAL }
+    | "penlength" { PENLENGTH }
+    | "penfilter" { PENFILTER }
+    | "penreap" { PENREAP }
+
+
     | id { IDENT (Lexing.lexeme lexbuf) }
     | int { INT (int_of_string (Lexing.lexeme lexbuf )) }
     | float {FLOAT (float_of_string (Lexing.lexeme lexbuf))}
