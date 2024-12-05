@@ -26,6 +26,44 @@ let tests =
            assert_equal
              (Oink ("x", Int 3, Ident "x"))
              (parse "oink x = 3 mud x") );
+         (* Math operation tests *)
+         ( "test PigPile" >:: fun _ ->
+           let result = interp "3 pigpile 5" in
+           assert_equal "8" result ~printer:(fun x -> x) );
+         ( "test SnoutOut" >:: fun _ ->
+           let result = interp "10 snoutout 4" in
+           assert_equal "6" result ~printer:(fun x -> x) );
+         ( "test MudMultiply" >:: fun _ ->
+           let result = interp "6 mudmultiply 7" in
+           assert_equal "42" result ~printer:(fun x -> x) );
+         ( "test TroughSplit" >:: fun _ ->
+           let result = interp "20 troughsplit 4" in
+           assert_equal "5" result ~printer:(fun x -> x) );
+         ( "test PigPile with float" >:: fun _ ->
+           let result = interp "3.5 pigpile 2.5" in
+           assert_equal "6.0" result ~printer:(fun x -> x) );
+         ( "test SnoutOut with float" >:: fun _ ->
+           let result = interp "7.8 snoutout 2.3" in
+           assert_equal "5.5" result ~printer:(fun x -> x) );
+         ( "test MudMultiply with float" >:: fun _ ->
+           let result = interp "2.5 mudmultiply 4" in
+           assert_equal "10.0" result ~printer:(fun x -> x) );
+         ( "test TroughSplit with float" >:: fun _ ->
+           let result = interp "15.0 troughsplit 3" in
+           assert_equal "5.0" result ~printer:(fun x -> x) );
+         ( "test TroughSplit division by zero" >:: fun _ ->
+           try
+             let _ = interp "10 troughsplit 0" in
+             assert_failure "Expected division by zero error"
+           with
+           | Failure msg -> assert_equal "Error: Division by zero." msg
+           | Division_by_zero -> ()
+           | e ->
+               let error_msg = Printexc.to_string e in
+               assert_failure ("Unexpected exception raised: " ^ error_msg) );
+         ( "test PigPile mixed types" >:: fun _ ->
+           let result = interp "3 pigpile 2.5" in
+           assert_equal "5.5" result ~printer:(fun x -> x) );
          ( "test oink no mud" >:: fun _ ->
            let result = interp "oink x = 3;" in
            assert_equal "Squeal" result ~printer:(fun x -> x) );

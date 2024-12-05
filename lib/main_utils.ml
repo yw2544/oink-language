@@ -5,18 +5,35 @@ let global_env = Hashtbl.create 100
 
 (**[parse s] parses [s] into an AST.*)
 let parse (s : string) : expr =
-  (* print_endline "start parse"; *)
+  print_endline ("Parsing input: " ^ s);
   let lexbuf = Lexing.from_string s in
-  let ast = Parser.prog Lexer.read lexbuf in
-  (* print_endline "finished parse"; *)
-  ast
+  try
+    let ast = Parser.prog Lexer.read lexbuf in
+    (match ast with
+    | Int _ -> print_endline "Parsed an integer."
+    | Float _ -> print_endline "Parsed a float."
+    | String _ -> print_endline "Parsed a string."
+    | Ident _ -> print_endline "Parsed an identifier."
+    | PigPile _ -> print_endline "Parsed PigPile operation."
+    | SnoutOut _ -> print_endline "Parsed SnoutOut operation."
+    | MudMultiply _ -> print_endline "Parsed MudMultiply operation."
+    | TroughSplit _ -> print_endline "Parsed TroughSplit operation."
+    | _ -> print_endline "Parsed another type of expression.");
+    ast
+  with
+  | Parser.Error ->
+      print_endline "Parsing error: Invalid syntax.";
+      raise (Failure "Parsing error")
+  | _ ->
+      print_endline "An unexpected parsing error occurred.";
+      raise (Failure "Unexpected parsing error")
 
 (**[string_of_val e] converts [e] to a string Requires: [e] is a value.*)
 let string_of_val (e : expr) : string =
   match e with
   | Int i -> string_of_int i
   | String s -> s
-  | Float x -> string_of_float x
+  | Float x -> Printf.sprintf "%.1f" x
   | Boolean b -> string_of_bool b
   | Oink (id, e1, e2) -> "oink"
   | Ident _ -> "ident"
@@ -27,12 +44,12 @@ let string_of_val (e : expr) : string =
   | Pen lst -> "pen: unsuported rn"
   | _ -> "currently unsupported"
 
-(** [is_value e] is whether [e] is a value*)
 let is_value : expr -> bool = function
   | Squeal | Int _ | Float _ | String _ | Boolean _ | WorkhorseVal _ | PenVal _
     -> true
   | Oink _ | OinkGlob _ | Go _ | And _ | Or _ | Ident _ | Workhorse _ | Pen _ ->
       false
+  | _ -> false
 
 let rec oink_sub id value expr outer_env =
   let oink_env = Hashtbl.copy outer_env in
@@ -50,13 +67,56 @@ let rec oink_sub id value expr outer_env =
 
 (**[step e] takes a sigle step of evaluation of [e].*)
 and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
+  print_endline ("Stepping expression: " ^ string_of_val e);
   match e with
   | Int _ -> failwith "does not step"
   | Float _ -> failwith "does not step"
   | String _ -> failwith "does not step"
-  | Boolean _ -> failwith "does not step"
+  | Boolean _ -> failwith "does not\n     step"
   | PenVal _ -> failwith "does not step"
   | Ident x -> Hashtbl.find env x
+  (* | Int i -> Int i | Float f -> Float f | String s -> String s | Boolean b ->
+     Boolean b | PenVal p -> PenVal p *)
+  (* Math operations *)
+  | PigPile (e1, e2) when is_value e1 && is_value e2 -> (
+      match (e1, e2) with
+      | Int i1, Int i2 -> Int (i1 + i2)
+      | Float f1, Float f2 -> Float (f1 +. f2)
+      | Int i1, Float f2 -> Float (float_of_int i1 +. f2)
+      | Float f1, Int i2 -> Float (f1 +. float_of_int i2)
+      | _ -> failwith "Type error in PigPile operation")
+  | SnoutOut (e1, e2) when is_value e1 && is_value e2 -> (
+      match (e1, e2) with
+      | Int i1, Int i2 -> Int (i1 - i2)
+      | Float f1, Float f2 -> Float (f1 -. f2)
+      | Int i1, Float f2 -> Float (float_of_int i1 -. f2)
+      | Float f1, Int i2 -> Float (f1 -. float_of_int i2)
+      | _ -> failwith "Type error in SnoutOut operation")
+  | MudMultiply (e1, e2) when is_value e1 && is_value e2 -> (
+      match (e1, e2) with
+      | Int i1, Int i2 -> Int (i1 * i2)
+      | Float f1, Float f2 -> Float (f1 *. f2)
+      | Int i1, Float f2 -> Float (float_of_int i1 *. f2)
+      | Float f1, Int i2 -> Float (f1 *. float_of_int i2)
+      | _ -> failwith "Type error in MudMultiply operation")
+  | TroughSplit (e1, e2) when is_value e1 && is_value e2 -> (
+      match (e1, e2) with
+      | Int i1, Int i2 when i2 = 0 -> raise Division_by_zero
+      | Float f1, Float f2 when f2 = 0.0 -> raise Division_by_zero
+      | Int i1, Int i2 -> Int (i1 / i2)
+      | Float f1, Float f2 -> Float (f1 /. f2)
+      | Int i1, Float f2 -> Float (float_of_int i1 /. f2)
+      | Float f1, Int i2 -> Float (f1 /. float_of_int i2)
+      | _ -> failwith "Invalid TroughSplit expression")
+  (* Handle cases where arguments are not yet evaluated *)
+  | PigPile (e1, e2) when is_value e1 -> PigPile (e1, step e2 env)
+  | PigPile (e1, e2) -> PigPile (step e1 env, e2)
+  | SnoutOut (e1, e2) when is_value e1 -> SnoutOut (e1, step e2 env)
+  | SnoutOut (e1, e2) -> SnoutOut (step e1 env, e2)
+  | MudMultiply (e1, e2) when is_value e1 -> MudMultiply (e1, step e2 env)
+  | MudMultiply (e1, e2) -> MudMultiply (step e1 env, e2)
+  | TroughSplit (e1, e2) when is_value e1 -> TroughSplit (e1, step e2 env)
+  | TroughSplit (e1, e2) -> TroughSplit (step e1 env, e2)
   | And (e1, e2) when is_value e1 && is_value e2 -> (
       match (e1, e2) with
       | Boolean b1, Boolean b2 ->
@@ -164,7 +224,9 @@ and eval (e : expr) (env : (string, expr) Hashtbl.t) : expr =
 (**[interp s] interprets [s] by lexing and parsing it, evaluating it, and
    converting the result to a string.*)
 let interp (s : string) : string =
-  (* print_endline "in interp"; *)
   try s |> parse |> (fun e -> eval e global_env) |> string_of_val with
   | Failure msg -> "Error: " ^ msg
-  | _ -> "An unexpected error occurred while interpreting."
+  | Not_found -> "Error: Unbound identifier found during evaluation."
+  | Division_by_zero -> raise Division_by_zero
+  | Invalid_argument msg -> "Error: Invalid argument: " ^ msg
+  | e -> "An unexpected error occurred: " ^ Printexc.to_string e

@@ -14,5 +14,10 @@ type expr =
   | Go of string * expr
   | Pen of expr list
   | PenVal of expr list
+  | PigPile of expr * expr (* Addition *)
+  | SnoutOut of expr * expr (* Subtraction *)
+  | MudMultiply of expr * expr (* Multiplication *)
+  | TroughSplit of expr * expr
+(* Division *)
 
 (* type statement = Oink of string * expr * expr *)

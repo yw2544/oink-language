@@ -40,10 +40,16 @@ rule read =
     | ";" {SEP}
     | "["{PEN_START}
     | "]"{PEN_END}
+    | "pigpile" { PIGPILE }
+    | "snoutout" { SNOUTOUT }
+    | "mudmultiply" { MUDMULTIPLY }
+    | "troughsplit" { TROUGHSPLIT }
     | id { IDENT (Lexing.lexeme lexbuf) }
     | int { INT (int_of_string (Lexing.lexeme lexbuf )) }
     | float {FLOAT (float_of_string (Lexing.lexeme lexbuf))}
     | eof { EOF }
+    
+
 
 
 and read_string buf =
