@@ -88,7 +88,7 @@ let is_value : expr -> bool = function
     -> true
   | Oink _ | OinkGlob _ | Go _ | And _ | Or _ | Ident _ | Workhorse _ | Pen _ ->
       false
-  | _ -> false
+  | If _ | _ -> false
 
 let rec oink_sub id value expr outer_env =
   let oink_env = Hashtbl.copy outer_env in
@@ -149,6 +149,7 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
       | Float f1, Int i2 -> Float (f1 /. float_of_int i2)
       | _ -> failwith "Invalid TroughSplit expression")
   | Eq (e1, e2) -> (
+      print_endline "within EQ";
       let v1 = eval e1 env in
       let v2 = eval e2 env in
       match (v1, v2) with
@@ -278,6 +279,7 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
       let lst = pen_eval_lst lst env in
       apply id lst env
   | Go (id, x) -> apply id [ x ] env
+  | If (e, e1, e2) -> if_eval e e1 e2 env
   | _ -> failwith "unsupported step"
 
 and apply id apply_lst current_outer =
@@ -346,6 +348,17 @@ and pen_eval_lst lst env =
   print_endline
     ("Evaluating Pen list of length " ^ string_of_int (List.length lst));
   List.map f lst
+
+and if_eval e e1 e2 env =
+  let cond = eval e env in
+  match cond with
+  | Boolean true ->
+      print_endline "cond true";
+      eval e1 env
+  | Boolean false ->
+      print_endline "cond false";
+      eval e2 env
+  | _ -> failwith "if statement condition evaluation error."
 
 and eval (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   if is_value e then e else eval (step e env) env

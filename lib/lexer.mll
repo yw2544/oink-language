@@ -52,6 +52,9 @@ rule read =
     | "penlength" { PENLENGTH }
     | "penfilter" { PENFILTER }
     | "penreap" { PENREAP }
+    | "if" {IF}
+    | "else" {ELSE}
+
 
 
     | id { IDENT (Lexing.lexeme lexbuf) }

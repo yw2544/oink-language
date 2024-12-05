@@ -28,6 +28,7 @@ type expr =
   | MudMultiply of expr * expr (* Multiplication *)
   | TroughSplit of expr * expr
   | Eq of expr * expr
+  | If of expr * expr * expr
 (* Equality check *)
 (* Division *)
 

@@ -28,6 +28,8 @@
 %token PENLENGTH
 %token PENFILTER
 %token PENREAP
+%token IF
+%token ELSE
 
 %start <Ast.expr> prog
 %type <Ast.expr> expr
@@ -45,10 +47,13 @@ prog:
 ;
 
 expr:
+
 | OINK id = IDENT EQ e1 = expr MUD e2 = expr {Oink (id, e1, e2)}
 | OINK id = IDENT EQ e1 = expr SEP {OinkGlob (id, e1)}
 | PEN_START PEN_END { Pen [] }  (* Handle empty list *)
 | PEN_START lst = expr_list PEN_END { Pen lst }  (* Handle non-empty list *)
+| IF e = expr GATE e1 = expr GATE ELSE GATE e2 = expr GATE {If(e,e1,e2)}
+| IF e = expr GATE e1 = expr GATE {If (e,e1,Squeal)}
 // various workhorse syntactic suggar
 | WORKHORSE id = IDENT mot = IDENT GATE body=expr BAAA return=expr GATE { 
     OinkGlob (id, Workhorse (Pen [Ident mot], body, return)) 
@@ -91,6 +96,8 @@ expr:
 | e1 = expr PENFILTER GO id = IDENT { PenFilter (e1, Go (id, Ident id)) }
 | e1 = expr PENFILTER e2 = expr { PenFilter (e1, e2) }
 | e1 = expr PENREAP e2 = expr { PenReap (e1, e2) }
+
+
 ;
 
 

@@ -9,314 +9,317 @@ let make_i n i s = n >:: fun _ -> assert_equal (string_of_int i) (interp s)
 let make_s n s1 s2 = n >:: fun _ -> assert_equal s1 (interp s2)
 let print_interp input = Printf.printf "Result: %s\n" (interp input)
 
-let tests =
-  "test suite"
-  >::: [
-         make_i "process integer" 22 "22";
-         make_s "process string" "hello world" "\"hello world\"";
-         ( "test eval" >:: fun _ ->
-           let result = interp "oink x = 3 mud x" in
-           assert_equal "3" result );
-         ( "test eval" >:: fun _ ->
-           let result = interp "oink x = oink y = 4 mud y mud x" in
-           assert_equal "4" result );
-         ( "test parse" >:: fun _ ->
-           assert_equal (Oink ("x", Int 3, Int 3)) (parse "oink x = 3 mud 3") );
-         ( "test parse" >:: fun _ ->
-           assert_equal
-             (Oink ("x", Int 3, Ident "x"))
-             (parse "oink x = 3 mud x") );
-         (* Math operation tests *)
-         ( "test PigPile" >:: fun _ ->
-           let result = interp "3 pigpile 5" in
-           assert_equal "8" result ~printer:(fun x -> x) );
-         ( "test SnoutOut" >:: fun _ ->
-           let result = interp "10 snoutout 4" in
-           assert_equal "6" result ~printer:(fun x -> x) );
-         ( "test MudMultiply" >:: fun _ ->
-           let result = interp "6 mudmultiply 7" in
-           assert_equal "42" result ~printer:(fun x -> x) );
-         ( "test TroughSplit" >:: fun _ ->
-           let result = interp "20 troughsplit 4" in
-           assert_equal "5" result ~printer:(fun x -> x) );
-         ( "test PigPile with float" >:: fun _ ->
-           let result = interp "3.5 pigpile 2.5" in
-           assert_equal "6.0" result ~printer:(fun x -> x) );
-         ( "test SnoutOut with float" >:: fun _ ->
-           let result = interp "7.8 snoutout 2.3" in
-           assert_equal "5.5" result ~printer:(fun x -> x) );
-         ( "test MudMultiply with float" >:: fun _ ->
-           let result = interp "2.5 mudmultiply 4" in
-           assert_equal "10.0" result ~printer:(fun x -> x) );
-         ( "test TroughSplit with float" >:: fun _ ->
-           let result = interp "15.0 troughsplit 3" in
-           assert_equal "5.0" result ~printer:(fun x -> x) );
-         ( "test TroughSplit division by zero" >:: fun _ ->
-           try
-             let _ = interp "10 troughsplit 0" in
-             assert_failure "Expected division by zero error"
-           with
-           | Failure msg -> assert_equal "Error: Division by zero." msg
-           | Division_by_zero -> ()
-           | e ->
-               let error_msg = Printexc.to_string e in
-               assert_failure ("Unexpected exception raised: " ^ error_msg) );
-         ( "test PigPile mixed types" >:: fun _ ->
-           let result = interp "3 pigpile 2.5" in
-           assert_equal "5.5" result ~printer:(fun x -> x) );
-         ( "test oink no mud" >:: fun _ ->
-           let result = interp "oink x = 3;" in
-           assert_equal "Squeal" result ~printer:(fun x -> x) );
-         ( "test oink no mud evaluated" >:: fun _ ->
-           let result = interp "oink x = 11;" in
-           let result2 = interp "x" in
-           assert_equal "11" result2 ~printer:(fun x -> x);
-           assert_equal "Squeal" result ~printer:(fun x -> x) );
-         ( "test oink no mud" >:: fun _ ->
-           let result = interp "oink x = 3;" in
-           assert_equal "Squeal" result ~printer:(fun x -> x) );
-         ( "test oink no mud evaluated" >:: fun _ ->
-           let result = interp "oink x = 11;" in
-           let result2 = interp "x" in
-           assert_equal "11" result2 ~printer:(fun x -> x);
-           assert_equal "Squeal" result ~printer:(fun x -> x) );
-         ( "test workhorse" >:: fun _ ->
-           let result = interp "workhorse example x #x baaa x#" in
-           assert_equal "Squeal" result ~printer:(fun x -> x) );
-         ( "test workhorse evaluated return expr is value" >:: fun _ ->
-           let result = interp "workhorse example x #6 baaa 3#" in
-           let evaluated = interp "go! example 3" in
-           assert_equal "Squeal" result ~printer:(fun x -> x);
-           assert_equal "3" evaluated ~printer:(fun x -> x) );
-         ( "test workhorse evaluated return expr is not value" >:: fun _ ->
-           let result = interp "workhorse example x # baaa x#" in
-           let evaluated = interp "go! example 3" in
-           assert_equal "Squeal" result ~printer:(fun x -> x);
-           assert_equal "3" evaluated ~printer:(fun x -> x) );
-         ( "test workhorse containing oink no mud" >:: fun _ ->
-           let result = interp "workhorse example x # oink y = 4; baaa y#" in
-           let evaluated = interp "go! example 3" in
-           assert_equal "Squeal" result ~printer:(fun x -> x);
-           assert_equal "4" evaluated ~printer:(fun x -> x) );
-         ( "test workhorse nested" >:: fun _ ->
-           let result =
-             interp
-               "workhorse example x # workhorse exp y #4 baaa y# baaa go! exp \
-                4#"
-           in
-           let evaluated = interp "go! example 3" in
-           assert_equal "Squeal" result ~printer:(fun x -> x);
-           assert_equal "4" evaluated ~printer:(fun x -> x) );
-         ( "test workhorse alternate definition. oink + anonymous function"
-         >:: fun _ ->
-           let result =
-             interp "oink test = workhorse x # oink y = 14; baaa y#;"
-           in
-           let evaluated = interp "go! test 3" in
-           assert_equal "Squeal" result ~printer:(fun x -> x);
-           assert_equal "14" evaluated ~printer:(fun x -> x) );
-         ( "test workhorse multi input 1st input" >:: fun _ ->
-           let func_def = interp "workhorse example [a; b] #baaa a#" in
-           let evaluated = interp "go! example [3; 5]" in
-           assert_equal "Squeal" func_def ~printer:(fun x -> x);
-           assert_equal "3" evaluated ~printer:(fun x -> x) );
-         ( "test workhorse multi input 2nd input" >:: fun _ ->
-           let func_def = interp "workhorse example [a; b] #baaa b#" in
-           let evaluated = interp "go! example [3; 5]" in
-           assert_equal "Squeal" func_def ~printer:(fun x -> x);
-           assert_equal "5" evaluated ~printer:(fun x -> x) );
-         ( "test lexical scope of functions" >:: fun _ ->
-           let _ = interp "oink x = 54;" in
-           let func_def = interp "workhorse example [a; b] #baaa x#" in
-           let _ = interp "oink x = 88;" in
-           let evaluated = interp "go! example [3; 5]" in
-           assert_equal "Squeal" func_def ~printer:(fun x -> x);
-           assert_equal "54" evaluated ~printer:(fun x -> x) );
-         ( "test scope of function" >:: fun _ ->
-           let _ = interp "oink x = 54;" in
-           let func_def = interp "workhorse example [x; b] #baaa x#" in
-           let _ = interp "oink x = 88;" in
-           let evaluated = interp "go! example [3; 5]" in
-           assert_equal "Squeal" func_def ~printer:(fun x -> x);
-           assert_equal "3" evaluated ~printer:(fun x -> x) );
-         (* Pen operations test*)
-         (* PenPen - Append two Pen lists *)
-         ( "PenPen append two Pen lists" >:: fun _ ->
-           let result = interp "[1; 2] penpen [3; 4]" in
-           assert_equal "pen: [1, 2, 3, 4]" result );
-         (* PenPen - Append a Pen list to empty Pen list *)
-         ( "PenPen append to empty list" >:: fun _ ->
-           let result = interp "[] penpen [3; 4]" in
-           assert_equal "pen: [3, 4]" result );
-         (* PenPen - Append empty Pen list to another Pen list *)
-         ( "PenPen append empty list to Pen list" >:: fun _ ->
-           let result = interp "[1; 2] penpen []" in
-           assert_equal "pen: [1, 2]" result );
-         (* PenPen - Append two empty Pen lists *)
-         ( "PenPen append two empty lists" >:: fun _ ->
-           let result = interp "[] penpen []" in
-           assert_equal "pen: []" result );
-         (* PenPen - Nested Pen lists *)
-         ( "PenPen append nested Pen lists" >:: fun _ ->
-           let result = interp "[[1; 2]; [3; 4]] penpen [[5; 6]]" in
-           assert_equal "pen: [pen: [1, 2], pen: [3, 4], pen: [5, 6]]" result );
-         (* Ppen - Prepend a value to a Pen list *)
-         ( "Ppen prepend a value to Pen list" >:: fun _ ->
-           let result = interp "1 ppen [2; 3]" in
-           assert_equal "pen: [1, 2, 3]" result );
-         (* Ppen - Prepend a value to an empty Pen list *)
-         ( "Ppen prepend value to empty list" >:: fun _ ->
-           let result = interp "1 ppen []" in
-           assert_equal "pen: [1]" result );
-         (* Ppen - Prepend a value to a Pen list with a single element *)
-         ( "Ppen prepend value to single-element list" >:: fun _ ->
-           let result = interp "0 ppen [1]" in
-           assert_equal "pen: [0, 1]" result );
-         (* Ppen - Prepend a value to a Pen list with multiple elements *)
-         ( "Ppen prepend value to multi-element Pen list" >:: fun _ ->
-           let result = interp "5 ppen [1; 2; 3]" in
-           assert_equal "pen: [5, 1, 2, 3]" result );
-         (* Ppen - Prepend a value to an already empty Pen list *)
-         ( "Ppen prepend to empty list" >:: fun _ ->
-           let result = interp "99 ppen []" in
-           assert_equal "pen: [99]" result );
-         (* Ppen - Prepend a value to a Pen list with elements of different
-            types *)
-         ( "Ppen prepend value to list with different types" >:: fun _ ->
-           let result = interp "\"hello\" ppen [\"hi\"; \"hii\"; \"hiii\"]" in
-           assert_equal "pen: [hello, hi, hii, hiii]" result );
-         (* PenSnatch - Remove element from a list by valid index *)
-         ( "PenSnatch remove element at index 1" >:: fun _ ->
-           let result = interp "[1; 2; 3] pensnatch 1" in
-           assert_equal "pen: [1, 3]" result );
-         (* PenSnatch - Remove first element *)
-         ( "PenSnatch remove first element" >:: fun _ ->
-           let result = interp "[10; 20; 30] pensnatch 0" in
-           assert_equal "pen: [20, 30]" result );
-         (* PenSnatch - Remove last element *)
-         ( "PenSnatch remove last element" >:: fun _ ->
-           let result = interp "[4; 5; 6] pensnatch 2" in
-           assert_equal "pen: [4, 5]" result );
-         (* PenSnatch - Remove second element from a list of 4 elements *)
-         ( "PenSnatch remove second element" >:: fun _ ->
-           let result = interp "[7; 8; 9; 10] pensnatch 1" in
-           assert_equal "pen: [7, 9, 10]" result );
-         (* PenSnatch - Remove third element from a list of 5 elements *)
-         ( "PenSnatch remove third element" >:: fun _ ->
-           let result = interp "[5; 6; 7; 8; 9] pensnatch 2" in
-           assert_equal "pen: [5, 6, 8, 9]" result );
-         (* PenSnatch - Remove middle element from an odd-length list *)
-         ( "PenSnatch remove middle element from odd-length list" >:: fun _ ->
-           let result = interp "[11; 22; 33; 44; 55] pensnatch 2" in
-           assert_equal "pen: [11, 22, 44, 55]" result );
-         (* PenSnatch - Remove middle element from an even-length list *)
-         ( "PenSnatch remove middle element from even-length list" >:: fun _ ->
-           let result = interp "[1; 3; 5; 7; 9; 11] pensnatch 3" in
-           assert_equal "pen: [1, 3, 5, 9, 11]" result );
-         (* PenSnatch - Remove first element from a list of strings *)
-         ( "PenSnatch remove first element from string list" >:: fun _ ->
-           let result = interp "[\"a\"; \"b\"; \"c\"; \"d\"] pensnatch 0" in
-           assert_equal "pen: [b, c, d]" result );
-         (* PenSnatch - Remove second element from a list of strings *)
-         ( "PenSnatch remove second element from string list" >:: fun _ ->
-           let result =
-             interp "[\"apple\"; \"banana\"; \"cherry\"] pensnatch 1"
-           in
-           assert_equal "pen: [apple, cherry]" result );
-         (* PenSnatch - Remove element from nested Pen list *)
-         ( "PenSnatch remove element from nested Pen list" >:: fun _ ->
-           let result = interp "[[1; 2]; [3; 4]; [5; 6]] pensnatch 1" in
-           assert_equal "pen: [pen: [1, 2], pen: [5, 6]]" result );
-         (* PenSnatch - Remove second element from a longer list *)
-         ( "PenSnatch remove second element from longer list" >:: fun _ ->
-           let result = interp "[100; 200; 300; 400; 500] pensnatch 1" in
-           assert_equal "pen: [100, 300, 400, 500]" result );
-         (* PenSnatch - Remove element from list of floats *)
-         ( "PenSnatch remove element from float list" >:: fun _ ->
-           let result = interp "[1.1; 2.2; 3.3; 4.4] pensnatch 2" in
-           assert_equal "pen: [1.1, 2.2, 4.4]" result );
-         (* PenSnatch - Remove element from a list containing boolean values *)
-         ( "PenSnatch remove boolean element" >:: fun _ ->
-           let result = interp "[true; false; true] pensnatch 1" in
-           assert_equal "pen: [true, true]" result );
-         (* PenSnatch - Remove first element from a list of all identical
-            values *)
-         ( "PenSnatch remove from identical values list" >:: fun _ ->
-           let result = interp "[42; 42; 42; 42] pensnatch 0" in
-           assert_equal "pen: [42, 42, 42]" result );
-         (* PenSqueal - Get first element from a Pen list *)
-         ( "PenSqueal get first element" >:: fun _ ->
-           let result = interp "[1; 2; 3] pensqueal" in
-           assert_equal "1" result );
-         (* PenSqueal - Get first string element *)
-         ( "PenSqueal get first string element" >:: fun _ ->
-           let result =
-             interp "[\"apple\"; \"banana\"; \"cherry\"] pensqueal"
-           in
-           assert_equal "apple" result );
-         (* PenSqueal - Get first element from nested Pen list *)
-         ( "PenSqueal get first element from nested Pen list" >:: fun _ ->
-           let result = interp "[[1; 2]; [3; 4]] pensqueal" in
-           assert_equal "pen: [1, 2]" result );
-         (* PenSqueal - Get first float element *)
-         ( "PenSqueal get first float element" >:: fun _ ->
-           let result = interp "[1.1; 2.2; 3.3] pensqueal" in
-           assert_equal "1.1" result );
-         (* PenSqueal - Get first boolean element *)
-         ( "PenSqueal get first boolean element" >:: fun _ ->
-           let result = interp "[true; false; true] pensqueal" in
-           assert_equal "true" result );
-         (* PenSqueal - PenSqueal from single-element list *)
-         ( "PenSqueal from single-element list" >:: fun _ ->
-           let result = interp "[42] pensqueal" in
-           assert_equal "42" result );
-         (* PenSqueal - PenSqueal after evaluating a complex expression *)
-         ( "PenSqueal after evaluating a complex expression" >:: fun _ ->
-           let result =
-             interp "[1 pigpile 1; 3 mudmultiply 4; 5 snoutout 2] pensqueal"
-           in
-           assert_equal "2" result );
-         (* PenLength - Get length of a list with integers *)
-         ( "PenLength list of integers" >:: fun _ ->
-           let result = interp "[1; 2; 3] penlength" in
-           assert_equal "3" result );
-         (* PenLength - Get length of a list with strings *)
-         ( "PenLength list of strings" >:: fun _ ->
-           let result =
-             interp "[\"apple\"; \"banana\"; \"cherry\"] penlength"
-           in
-           assert_equal "3" result );
-         (* PenLength - Get length of a list with mixed data types *)
-         ( "PenLength list with mixed data types" >:: fun _ ->
-           let result = interp "[1; \"banana\"; 2.5; true] penlength" in
-           assert_equal "4" result );
-         (* PenLength - Get length of an empty list *)
-         ( "PenLength of an empty list" >:: fun _ ->
-           let result = interp "[] penlength" in
-           assert_equal "0" result );
-         (* PenLength - Get length of a nested list *)
-         ( "PenLength of a nested list" >:: fun _ ->
-           let result = interp "[[1; 2]; [3; 4]; [5; 6]] penlength" in
-           assert_equal "3" result );
-         (* PenLength - Get length of a single-element list *)
-         ( "PenLength of a single-element list" >:: fun _ ->
-           let result = interp "[42] penlength" in
-           assert_equal "1" result );
-         (* PenLength - Get length after evaluating a list expression *)
-         ( "PenLength after evaluating a list expression" >:: fun _ ->
-           let result =
-             interp "[1 pigpile 1; 3 snoutout 1; 5 mudmultiply 2] penlength"
-           in
-           assert_equal "3" result );
-         (* PenLength - Get length of a list containing another list *)
-         ( "PenLength of a list containing another list" >:: fun _ ->
-           let result = interp "[1; [2; 3]; 4] penlength" in
-           assert_equal "3" result );
-         (* PenLength - Get length of a boolean list *)
-         ( "PenLength of a boolean list" >:: fun _ ->
-           let result = interp "[true; false; true] penlength" in
-           assert_equal "3" result );
-       ]
+let all_tests =
+  [
+    make_i "process integer" 22 "22";
+    make_s "process string" "hello world" "\"hello world\"";
+    ( "test eval" >:: fun _ ->
+      let result = interp "oink x = 3 mud x" in
+      assert_equal "3" result );
+    ( "test eval" >:: fun _ ->
+      let result = interp "oink x = oink y = 4 mud y mud x" in
+      assert_equal "4" result );
+    ( "test parse" >:: fun _ ->
+      assert_equal (Oink ("x", Int 3, Int 3)) (parse "oink x = 3 mud 3") );
+    ( "test parse" >:: fun _ ->
+      assert_equal (Oink ("x", Int 3, Ident "x")) (parse "oink x = 3 mud x") );
+    (* Math operation tests *)
+    ( "test PigPile" >:: fun _ ->
+      let result = interp "3 pigpile 5" in
+      assert_equal "8" result ~printer:(fun x -> x) );
+    ( "test SnoutOut" >:: fun _ ->
+      let result = interp "10 snoutout 4" in
+      assert_equal "6" result ~printer:(fun x -> x) );
+    ( "test MudMultiply" >:: fun _ ->
+      let result = interp "6 mudmultiply 7" in
+      assert_equal "42" result ~printer:(fun x -> x) );
+    ( "test TroughSplit" >:: fun _ ->
+      let result = interp "20 troughsplit 4" in
+      assert_equal "5" result ~printer:(fun x -> x) );
+    ( "test PigPile with float" >:: fun _ ->
+      let result = interp "3.5 pigpile 2.5" in
+      assert_equal "6.0" result ~printer:(fun x -> x) );
+    ( "test SnoutOut with float" >:: fun _ ->
+      let result = interp "7.8 snoutout 2.3" in
+      assert_equal "5.5" result ~printer:(fun x -> x) );
+    ( "test MudMultiply with float" >:: fun _ ->
+      let result = interp "2.5 mudmultiply 4" in
+      assert_equal "10.0" result ~printer:(fun x -> x) );
+    ( "test TroughSplit with float" >:: fun _ ->
+      let result = interp "15.0 troughsplit 3" in
+      assert_equal "5.0" result ~printer:(fun x -> x) );
+    ( "test TroughSplit division by zero" >:: fun _ ->
+      try
+        let _ = interp "10 troughsplit 0" in
+        assert_failure "Expected division by zero error"
+      with
+      | Failure msg -> assert_equal "Error: Division by zero." msg
+      | Division_by_zero -> ()
+      | e ->
+          let error_msg = Printexc.to_string e in
+          assert_failure ("Unexpected exception raised: " ^ error_msg) );
+    ( "test PigPile mixed types" >:: fun _ ->
+      let result = interp "3 pigpile 2.5" in
+      assert_equal "5.5" result ~printer:(fun x -> x) );
+    ( "test oink no mud" >:: fun _ ->
+      let result = interp "oink x = 3;" in
+      assert_equal "Squeal" result ~printer:(fun x -> x) );
+    ( "test oink no mud evaluated" >:: fun _ ->
+      let result = interp "oink x = 11;" in
+      let result2 = interp "x" in
+      assert_equal "11" result2 ~printer:(fun x -> x);
+      assert_equal "Squeal" result ~printer:(fun x -> x) );
+    ( "test oink no mud" >:: fun _ ->
+      let result = interp "oink x = 3;" in
+      assert_equal "Squeal" result ~printer:(fun x -> x) );
+    ( "test oink no mud evaluated" >:: fun _ ->
+      let result = interp "oink x = 11;" in
+      let result2 = interp "x" in
+      assert_equal "11" result2 ~printer:(fun x -> x);
+      assert_equal "Squeal" result ~printer:(fun x -> x) );
+    ( "test workhorse" >:: fun _ ->
+      let result = interp "workhorse example x #x baaa x#" in
+      assert_equal "Squeal" result ~printer:(fun x -> x) );
+    ( "test workhorse evaluated return expr is value" >:: fun _ ->
+      let result = interp "workhorse example x #6 baaa 3#" in
+      let evaluated = interp "go! example 3" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "3" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse evaluated return expr is not value" >:: fun _ ->
+      let result = interp "workhorse example x # baaa x#" in
+      let evaluated = interp "go! example 3" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "3" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse containing oink no mud" >:: fun _ ->
+      let result = interp "workhorse example x # oink y = 4; baaa y#" in
+      let evaluated = interp "go! example 3" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "4" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse nested" >:: fun _ ->
+      let result =
+        interp
+          "workhorse example x # workhorse exp y #4 baaa y# baaa go! exp 4#"
+      in
+      let evaluated = interp "go! example 3" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "4" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse alternate definition. oink + anonymous function"
+    >:: fun _ ->
+      let result = interp "oink test = workhorse x # oink y = 14; baaa y#;" in
+      let evaluated = interp "go! test 3" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "14" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse multi input 1st input" >:: fun _ ->
+      let func_def = interp "workhorse example [a; b] #baaa a#" in
+      let evaluated = interp "go! example [3; 5]" in
+      assert_equal "Squeal" func_def ~printer:(fun x -> x);
+      assert_equal "3" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse multi input 2nd input" >:: fun _ ->
+      let func_def = interp "workhorse example [a; b] #baaa b#" in
+      let evaluated = interp "go! example [3; 5]" in
+      assert_equal "Squeal" func_def ~printer:(fun x -> x);
+      assert_equal "5" evaluated ~printer:(fun x -> x) );
+    ( "test lexical scope of functions" >:: fun _ ->
+      let _ = interp "oink x = 54;" in
+      let func_def = interp "workhorse example [a; b] #baaa x#" in
+      let _ = interp "oink x = 88;" in
+      let evaluated = interp "go! example [3; 5]" in
+      assert_equal "Squeal" func_def ~printer:(fun x -> x);
+      assert_equal "54" evaluated ~printer:(fun x -> x) );
+    ( "test scope of function" >:: fun _ ->
+      let _ = interp "oink x = 54;" in
+      let func_def = interp "workhorse example [x; b] #baaa x#" in
+      let _ = interp "oink x = 88;" in
+      let evaluated = interp "go! example [3; 5]" in
+      assert_equal "Squeal" func_def ~printer:(fun x -> x);
+      assert_equal "3" evaluated ~printer:(fun x -> x) );
+    (* Pen operations test*)
+    (* PenPen - Append two Pen lists *)
+    ( "PenPen append two Pen lists" >:: fun _ ->
+      let result = interp "[1; 2] penpen [3; 4]" in
+      assert_equal "pen: [1, 2, 3, 4]" result );
+    (* PenPen - Append a Pen list to empty Pen list *)
+    ( "PenPen append to empty list" >:: fun _ ->
+      let result = interp "[] penpen [3; 4]" in
+      assert_equal "pen: [3, 4]" result );
+    (* PenPen - Append empty Pen list to another Pen list *)
+    ( "PenPen append empty list to Pen list" >:: fun _ ->
+      let result = interp "[1; 2] penpen []" in
+      assert_equal "pen: [1, 2]" result );
+    (* PenPen - Append two empty Pen lists *)
+    ( "PenPen append two empty lists" >:: fun _ ->
+      let result = interp "[] penpen []" in
+      assert_equal "pen: []" result );
+    (* PenPen - Nested Pen lists *)
+    ( "PenPen append nested Pen lists" >:: fun _ ->
+      let result = interp "[[1; 2]; [3; 4]] penpen [[5; 6]]" in
+      assert_equal "pen: [pen: [1, 2], pen: [3, 4], pen: [5, 6]]" result );
+    (* Ppen - Prepend a value to a Pen list *)
+    ( "Ppen prepend a value to Pen list" >:: fun _ ->
+      let result = interp "1 ppen [2; 3]" in
+      assert_equal "pen: [1, 2, 3]" result );
+    (* Ppen - Prepend a value to an empty Pen list *)
+    ( "Ppen prepend value to empty list" >:: fun _ ->
+      let result = interp "1 ppen []" in
+      assert_equal "pen: [1]" result );
+    (* Ppen - Prepend a value to a Pen list with a single element *)
+    ( "Ppen prepend value to single-element list" >:: fun _ ->
+      let result = interp "0 ppen [1]" in
+      assert_equal "pen: [0, 1]" result );
+    (* Ppen - Prepend a value to a Pen list with multiple elements *)
+    ( "Ppen prepend value to multi-element Pen list" >:: fun _ ->
+      let result = interp "5 ppen [1; 2; 3]" in
+      assert_equal "pen: [5, 1, 2, 3]" result );
+    (* Ppen - Prepend a value to an already empty Pen list *)
+    ( "Ppen prepend to empty list" >:: fun _ ->
+      let result = interp "99 ppen []" in
+      assert_equal "pen: [99]" result );
+    (* Ppen - Prepend a value to a Pen list with elements of different types *)
+    ( "Ppen prepend value to list with different types" >:: fun _ ->
+      let result = interp "\"hello\" ppen [\"hi\"; \"hii\"; \"hiii\"]" in
+      assert_equal "pen: [hello, hi, hii, hiii]" result );
+    (* PenSnatch - Remove element from a list by valid index *)
+    ( "PenSnatch remove element at index 1" >:: fun _ ->
+      let result = interp "[1; 2; 3] pensnatch 1" in
+      assert_equal "pen: [1, 3]" result );
+    (* PenSnatch - Remove first element *)
+    ( "PenSnatch remove first element" >:: fun _ ->
+      let result = interp "[10; 20; 30] pensnatch 0" in
+      assert_equal "pen: [20, 30]" result );
+    (* PenSnatch - Remove last element *)
+    ( "PenSnatch remove last element" >:: fun _ ->
+      let result = interp "[4; 5; 6] pensnatch 2" in
+      assert_equal "pen: [4, 5]" result );
+    (* PenSnatch - Remove second element from a list of 4 elements *)
+    ( "PenSnatch remove second element" >:: fun _ ->
+      let result = interp "[7; 8; 9; 10] pensnatch 1" in
+      assert_equal "pen: [7, 9, 10]" result );
+    (* PenSnatch - Remove third element from a list of 5 elements *)
+    ( "PenSnatch remove third element" >:: fun _ ->
+      let result = interp "[5; 6; 7; 8; 9] pensnatch 2" in
+      assert_equal "pen: [5, 6, 8, 9]" result );
+    (* PenSnatch - Remove middle element from an odd-length list *)
+    ( "PenSnatch remove middle element from odd-length list" >:: fun _ ->
+      let result = interp "[11; 22; 33; 44; 55] pensnatch 2" in
+      assert_equal "pen: [11, 22, 44, 55]" result );
+    (* PenSnatch - Remove middle element from an even-length list *)
+    ( "PenSnatch remove middle element from even-length list" >:: fun _ ->
+      let result = interp "[1; 3; 5; 7; 9; 11] pensnatch 3" in
+      assert_equal "pen: [1, 3, 5, 9, 11]" result );
+    (* PenSnatch - Remove first element from a list of strings *)
+    ( "PenSnatch remove first element from string list" >:: fun _ ->
+      let result = interp "[\"a\"; \"b\"; \"c\"; \"d\"] pensnatch 0" in
+      assert_equal "pen: [b, c, d]" result );
+    (* PenSnatch - Remove second element from a list of strings *)
+    ( "PenSnatch remove second element from string list" >:: fun _ ->
+      let result = interp "[\"apple\"; \"banana\"; \"cherry\"] pensnatch 1" in
+      assert_equal "pen: [apple, cherry]" result );
+    (* PenSnatch - Remove element from nested Pen list *)
+    ( "PenSnatch remove element from nested Pen list" >:: fun _ ->
+      let result = interp "[[1; 2]; [3; 4]; [5; 6]] pensnatch 1" in
+      assert_equal "pen: [pen: [1, 2], pen: [5, 6]]" result );
+    (* PenSnatch - Remove second element from a longer list *)
+    ( "PenSnatch remove second element from longer list" >:: fun _ ->
+      let result = interp "[100; 200; 300; 400; 500] pensnatch 1" in
+      assert_equal "pen: [100, 300, 400, 500]" result );
+    (* PenSnatch - Remove element from list of floats *)
+    ( "PenSnatch remove element from float list" >:: fun _ ->
+      let result = interp "[1.1; 2.2; 3.3; 4.4] pensnatch 2" in
+      assert_equal "pen: [1.1, 2.2, 4.4]" result );
+    (* PenSnatch - Remove element from a list containing boolean values *)
+    ( "PenSnatch remove boolean element" >:: fun _ ->
+      let result = interp "[true; false; true] pensnatch 1" in
+      assert_equal "pen: [true, true]" result );
+    (* PenSnatch - Remove first element from a list of all identical values *)
+    ( "PenSnatch remove from identical values list" >:: fun _ ->
+      let result = interp "[42; 42; 42; 42] pensnatch 0" in
+      assert_equal "pen: [42, 42, 42]" result );
+    (* PenSqueal - Get first element from a Pen list *)
+    ( "PenSqueal get first element" >:: fun _ ->
+      let result = interp "[1; 2; 3] pensqueal" in
+      assert_equal "1" result );
+    (* PenSqueal - Get first string element *)
+    ( "PenSqueal get first string element" >:: fun _ ->
+      let result = interp "[\"apple\"; \"banana\"; \"cherry\"] pensqueal" in
+      assert_equal "apple" result );
+    (* PenSqueal - Get first element from nested Pen list *)
+    ( "PenSqueal get first element from nested Pen list" >:: fun _ ->
+      let result = interp "[[1; 2]; [3; 4]] pensqueal" in
+      assert_equal "pen: [1, 2]" result );
+    (* PenSqueal - Get first float element *)
+    ( "PenSqueal get first float element" >:: fun _ ->
+      let result = interp "[1.1; 2.2; 3.3] pensqueal" in
+      assert_equal "1.1" result );
+    (* PenSqueal - Get first boolean element *)
+    ( "PenSqueal get first boolean element" >:: fun _ ->
+      let result = interp "[true; false; true] pensqueal" in
+      assert_equal "true" result );
+    (* PenSqueal - PenSqueal from single-element list *)
+    ( "PenSqueal from single-element list" >:: fun _ ->
+      let result = interp "[42] pensqueal" in
+      assert_equal "42" result );
+    (* PenSqueal - PenSqueal after evaluating a complex expression *)
+    ( "PenSqueal after evaluating a complex expression" >:: fun _ ->
+      let result =
+        interp "[1 pigpile 1; 3 mudmultiply 4; 5 snoutout 2] pensqueal"
+      in
+      assert_equal "2" result );
+    (* PenLength - Get length of a list with integers *)
+    ( "PenLength list of integers" >:: fun _ ->
+      let result = interp "[1; 2; 3] penlength" in
+      assert_equal "3" result );
+    (* PenLength - Get length of a list with strings *)
+    ( "PenLength list of strings" >:: fun _ ->
+      let result = interp "[\"apple\"; \"banana\"; \"cherry\"] penlength" in
+      assert_equal "3" result );
+    (* PenLength - Get length of a list with mixed data types *)
+    ( "PenLength list with mixed data types" >:: fun _ ->
+      let result = interp "[1; \"banana\"; 2.5; true] penlength" in
+      assert_equal "4" result );
+    (* PenLength - Get length of an empty list *)
+    ( "PenLength of an empty list" >:: fun _ ->
+      let result = interp "[] penlength" in
+      assert_equal "0" result );
+    (* PenLength - Get length of a nested list *)
+    ( "PenLength of a nested list" >:: fun _ ->
+      let result = interp "[[1; 2]; [3; 4]; [5; 6]] penlength" in
+      assert_equal "3" result );
+    (* PenLength - Get length of a single-element list *)
+    ( "PenLength of a single-element list" >:: fun _ ->
+      let result = interp "[42] penlength" in
+      assert_equal "1" result );
+    (* PenLength - Get length after evaluating a list expression *)
+    ( "PenLength after evaluating a list expression" >:: fun _ ->
+      let result =
+        interp "[1 pigpile 1; 3 snoutout 1; 5 mudmultiply 2] penlength"
+      in
+      assert_equal "3" result );
+    (* PenLength - Get length of a list containing another list *)
+    ( "PenLength of a list containing another list" >:: fun _ ->
+      let result = interp "[1; [2; 3]; 4] penlength" in
+      assert_equal "3" result );
+    (* PenLength - Get length of a boolean list *)
+    ( "PenLength of a boolean list" >:: fun _ ->
+      let result = interp "[true; false; true] penlength" in
+      assert_equal "3" result ~printer:(fun x -> x) );
+    ( "Test if statement with true conditon" >:: fun _ ->
+      let result = interp "if true #1# else #2#" in
+      assert_equal "1" result ~printer:(fun x -> x) );
+    ( "Test if statement with false conditon" >:: fun _ ->
+      let _ = interp "oink x = 15;" in
+      let result = interp "if x = 5 #2# else #x#" in
+      assert_equal "15" result ~printer:(fun x -> x) );
+    ( "Test if statement with no else with true condition" >:: fun _ ->
+      let _ = interp "oink x = 11;" in
+      let result = interp "if x = 11 #x#" in
+      assert_equal "11" result ~printer:(fun x -> x) );
+    ( "Test if statement with no else with false condition" >:: fun _ ->
+      let _ = interp "oink x = 11;" in
+      let result = interp "if x =1 #x#" in
+      assert_equal "Squeal" result ~printer:(fun x -> x) );
+  ]
+
+let tests = "test suite" >::: all_tests
 
 let pen_tests =
   [
