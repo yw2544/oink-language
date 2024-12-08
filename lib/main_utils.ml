@@ -90,9 +90,14 @@ let is_value : expr -> bool = function
       false
   | If _ | _ -> false
 
+let print_hashtable hashtable =
+  Hashtbl.iter
+    (fun key value -> Printf.printf "%s -> %s\n" key (string_of_val value))
+    hashtable
+
 let rec oink_sub id value expr outer_env =
   let oink_env = Hashtbl.copy outer_env in
-  Hashtbl.add oink_env id value;
+  Hashtbl.replace oink_env id value;
   match expr with
   | Ident x when x = id -> value
   | Ident x -> Ident x
@@ -229,13 +234,17 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   | PenReap (e1, e2) -> PenReap (step e1 env, e2)
   (* Handle cases where arguments are not yet evaluated *)
   | PigPile (e1, e2) when is_value e1 -> PigPile (e1, step e2 env)
-  | PigPile (e1, e2) -> PigPile (step e1 env, e2)
+  | PigPile (e1, e2) when is_value e2 -> PigPile (step e1 env, e2)
+  | PigPile (e1, e2) -> PigPile (step e1 env, step e2 env)
   | SnoutOut (e1, e2) when is_value e1 -> SnoutOut (e1, step e2 env)
-  | SnoutOut (e1, e2) -> SnoutOut (step e1 env, e2)
+  | SnoutOut (e1, e2) when is_value e2 -> SnoutOut (step e1 env, e2)
+  | SnoutOut (e1, e2) -> SnoutOut (step e1 env, step e2 env)
   | MudMultiply (e1, e2) when is_value e1 -> MudMultiply (e1, step e2 env)
-  | MudMultiply (e1, e2) -> MudMultiply (step e1 env, e2)
+  | MudMultiply (e1, e2) when is_value e1 -> MudMultiply (step e1 env, e2)
+  | MudMultiply (e1, e2) -> MudMultiply (step e1 env, step e2 env)
   | TroughSplit (e1, e2) when is_value e1 -> TroughSplit (e1, step e2 env)
-  | TroughSplit (e1, e2) -> TroughSplit (step e1 env, e2)
+  | TroughSplit (e1, e2) when is_value e1 -> TroughSplit (step e1 env, e2)
+  | TroughSplit (e1, e2) -> TroughSplit (step e1 env, step e2 env)
   | And (e1, e2) when is_value e1 && is_value e2 -> (
       match (e1, e2) with
       | Boolean b1, Boolean b2 ->
@@ -269,7 +278,7 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
         oink_sub id value e2 env
   | OinkGlob (id, e1) ->
       print_endline ("adding to global env: " ^ id);
-      Hashtbl.add env id (eval e1 env);
+      Hashtbl.replace env id (eval e1 env);
       Squeal
   | Go (id, PenVal lst) ->
       print_endline "about to call apply";
@@ -294,6 +303,7 @@ and apply id apply_lst current_outer =
     let func_and_env = find_func_and_env () in
     let func = fst func_and_env in
     let func_env = snd func_and_env in
+    print_endline "within apply in try";
     match func with
     | Workhorse (Pen def_lst, body, return_expr) ->
         print_endline "matched with workhorse";
@@ -306,7 +316,7 @@ and apply id apply_lst current_outer =
         in
         print_endline "before adding to env";
         let add_to_table var_name var_value =
-          Hashtbl.add func_env var_name var_value
+          Hashtbl.replace func_env var_name var_value
         in
         List.iter print_endline def_lst_string;
         let print_element e = print_endline (string_of_val e) in
@@ -314,6 +324,8 @@ and apply id apply_lst current_outer =
         Printf.printf "The length of apply_lst is %d\n" (List.length apply_lst);
         List.iter2 add_to_table def_lst_string apply_lst;
         print_endline "after adding to env";
+        print_hashtable func_env;
+        print_endline "_____";
         if not (is_value body) then
           let _ = step body func_env in
           if is_value return_expr then return_expr

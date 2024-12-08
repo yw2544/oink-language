@@ -24,14 +24,20 @@ let all_tests =
     ( "test parse" >:: fun _ ->
       assert_equal (Oink ("x", Int 3, Ident "x")) (parse "oink x = 3 mud x") );
     (* Math operation tests *)
-    ( "test PigPile" >:: fun _ ->
-      let result = interp "3 pigpile 5" in
+    ( "test PigPile but with +" >:: fun _ ->
+      let result = interp "3 + 5" in
       assert_equal "8" result ~printer:(fun x -> x) );
     ( "test SnoutOut" >:: fun _ ->
       let result = interp "10 snoutout 4" in
       assert_equal "6" result ~printer:(fun x -> x) );
+    ( "test SnoutOut but with -" >:: fun _ ->
+      let result = interp "10 - 4" in
+      assert_equal "6" result ~printer:(fun x -> x) );
     ( "test MudMultiply" >:: fun _ ->
       let result = interp "6 mudmultiply 7" in
+      assert_equal "42" result ~printer:(fun x -> x) );
+    ( "test MudMultiply but with *" >:: fun _ ->
+      let result = interp "6 * 7" in
       assert_equal "42" result ~printer:(fun x -> x) );
     ( "test TroughSplit" >:: fun _ ->
       let result = interp "20 troughsplit 4" in
@@ -317,9 +323,49 @@ let all_tests =
       let _ = interp "oink x = 11;" in
       let result = interp "if x =1 #x#" in
       assert_equal "Squeal" result ~printer:(fun x -> x) );
+    ( "test workhorse with math operations" >:: fun _ ->
+      let result = interp "workhorse add_example x # baaa 5 + x#" in
+      let evaluated = interp "go!\n       add_example 3" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "8" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse 2 inputs with math operations addition" >:: fun _ ->
+      let result = interp "workhorse add_example [x;y] # baaa x + y#" in
+      let evaluated = interp "go! add_example [3;4]" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "7" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse 2 inputs with math operations multiplication" >:: fun _ ->
+      let result = interp "workhorse add_example [x;y] # baaa x * y#" in
+      let evaluated = interp "go! add_example [3;4]" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "12" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse 2 inputs with math operations division" >:: fun _ ->
+      let result = interp "workhorse add_example [x;y] # baaa x/y#" in
+      let evaluated = interp "go! add_example [8;4]" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "2" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse 3 inputs with math operations multiplication" >:: fun _ ->
+      let result = interp "workhorse add_example [x;y;z] # baaa x*y*z#" in
+      let evaluated = interp "go! add_example [2;4;3]" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "24" evaluated ~printer:(fun x -> x) );
   ]
 
-let tests = "test suite" >::: all_tests
+(* TODO TEST division MORE *)
+(* TODO TEST EDGE CASES FOR MATH OPERATIONS (int + float etc)*)
+let more_func_tests =
+  [ (* ( "test workhorse with if statements" >:: fun _ -> let result = interp
+       "workhorse test x # \n\ \ if x - 1 = 0 #oink y = 3#\n\ \ else #oink y =
+       4#\n\ \ baaa y#" in let evaluated = interp "go! add_example 0" in
+       assert_equal "Squeal" result ~printer:(fun x -> x); assert_equal "3"
+       evaluated ~printer:(fun x -> x) ); *)
+    (* ( "test workhorse recursive with math operations" >:: fun _ -> let result
+       = interp "workhorse recursive x # \n\ \ if x - 1 = 0 #oink y = 3#\n\ \
+       else ##\n\ \ baaa 5 + x#" in let evaluated = interp "go! add_example 3"
+       in assert_equal "Squeal" result ~printer:(fun x -> x); assert_equal "8"
+       evaluated ~printer:(fun x -> x) ); *) ]
+
+(* let tests = "test suite" >::: all_tests *)
+let tests = "test suite" >::: more_func_tests
 
 let pen_tests =
   [

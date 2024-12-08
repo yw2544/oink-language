@@ -42,9 +42,13 @@ rule read =
     | "["{PEN_START}
     | "]"{PEN_END}
     | "pigpile" { PIGPILE }
+    | "+" {PIGPILE}
     | "snoutout" { SNOUTOUT }
+    | "-" {SNOUTOUT}
     | "mudmultiply" { MUDMULTIPLY }
+    | "*" {MUDMULTIPLY}
     | "troughsplit" { TROUGHSPLIT }
+    | "/" { TROUGHSPLIT }
     | "penpen" { PENPEN }
     | "ppen" { PPEN }
     | "pensnatch" { PENSNATCH }
