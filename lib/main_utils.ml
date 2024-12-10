@@ -18,6 +18,7 @@ let parse (s : string) : expr =
     | SnoutOut _ -> print_endline "Parsed SnoutOut operation."
     | MudMultiply _ -> print_endline "Parsed MudMultiply operation."
     | TroughSplit _ -> print_endline "Parsed TroughSplit operation."
+    | Eq _ -> print_endline "Parsed EQ operation."
     | PenPen _ -> print_endline "Parsed Pen append operation."
     | Ppen _ -> print_endline "Parsed Pen prepend operation."
     | PenSnatch _ -> print_endline "Parsed Pen remove operation."
@@ -97,7 +98,7 @@ let print_hashtable hashtable =
 
 let rec oink_sub id value expr outer_env =
   let oink_env = Hashtbl.copy outer_env in
-  Hashtbl.replace oink_env id value;
+  Hashtbl.add oink_env id value;
   match expr with
   | Ident x when x = id -> value
   | Ident x -> Ident x
@@ -278,7 +279,7 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
         oink_sub id value e2 env
   | OinkGlob (id, e1) ->
       print_endline ("adding to global env: " ^ id);
-      Hashtbl.replace env id (eval e1 env);
+      Hashtbl.add env id (eval e1 env);
       Squeal
   | Go (id, PenVal lst) ->
       print_endline "about to call apply";
@@ -295,7 +296,9 @@ and apply id apply_lst current_outer =
   let find_func_and_env () =
     let func_and_env = Hashtbl.find current_outer id in
     match func_and_env with
-    | WorkhorseVal (func, func_env) -> (func, func_env)
+    | WorkhorseVal (func, func_env) ->
+        Hashtbl.add func_env id func_and_env;
+        (func, func_env)
     | _ -> failwith "failure in function application"
   in
   print_endline "within apply";
@@ -316,7 +319,7 @@ and apply id apply_lst current_outer =
         in
         print_endline "before adding to env";
         let add_to_table var_name var_value =
-          Hashtbl.replace func_env var_name var_value
+          Hashtbl.add func_env var_name var_value
         in
         List.iter print_endline def_lst_string;
         let print_element e = print_endline (string_of_val e) in

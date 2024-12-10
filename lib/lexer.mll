@@ -26,6 +26,8 @@ rule read =
     | white {read lexbuf}
     | newline {next_line lexbuf; read lexbuf}
     | '"' {read_string (Buffer.create 17) lexbuf}
+    | "{" {BRAC_START}
+    | "}" {BRAC_END}
     | "#" {GATE}
     | "baaa" {BAAA}
     | "true" {TRUE}

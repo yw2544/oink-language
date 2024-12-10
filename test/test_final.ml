@@ -309,19 +309,19 @@ let all_tests =
       let result = interp "[true; false; true] penlength" in
       assert_equal "3" result ~printer:(fun x -> x) );
     ( "Test if statement with true conditon" >:: fun _ ->
-      let result = interp "if true #1# else #2#" in
+      let result = interp "if true {1} else {2}" in
       assert_equal "1" result ~printer:(fun x -> x) );
     ( "Test if statement with false conditon" >:: fun _ ->
       let _ = interp "oink x = 15;" in
-      let result = interp "if x = 5 #2# else #x#" in
+      let result = interp "if x = 5 {2} else {x}" in
       assert_equal "15" result ~printer:(fun x -> x) );
     ( "Test if statement with no else with true condition" >:: fun _ ->
       let _ = interp "oink x = 11;" in
-      let result = interp "if x = 11 #x#" in
+      let result = interp "if x = 11 {x}" in
       assert_equal "11" result ~printer:(fun x -> x) );
     ( "Test if statement with no else with false condition" >:: fun _ ->
       let _ = interp "oink x = 11;" in
-      let result = interp "if x =1 #x#" in
+      let result = interp "if x =1 {x}" in
       assert_equal "Squeal" result ~printer:(fun x -> x) );
     ( "test workhorse with math operations" >:: fun _ ->
       let result = interp "workhorse add_example x # baaa 5 + x#" in
@@ -348,24 +348,82 @@ let all_tests =
       let evaluated = interp "go! add_example [2;4;3]" in
       assert_equal "Squeal" result ~printer:(fun x -> x);
       assert_equal "24" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse with simple body" >:: fun _ ->
+      let result = interp "workhorse test x # oink y = 4; baaa y+x#" in
+      let evaluated = interp "go! test 3" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "7" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse with if statements" >:: fun _ ->
+      let result =
+        interp
+          "workhorse test x # \n\
+          \  if x = 0 {oink y = 3;}\n\
+          \  else {oink y =4;}\n\
+           baaa y#"
+      in
+      let evaluated = interp "go! test 0" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "3" evaluated ~printer:(fun x -> x);
+      let evaluated = interp "go! test 1" in
+      assert_equal "4" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse with simple (more than one expr) body" >:: fun _ ->
+      let result = interp "workhorse test x # x; x baaa x#" in
+      let evaluated = interp "go! test 3" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "3" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse with simple (more than one expr) body" >:: fun _ ->
+      let result = interp "workhorse test x # oink y = 3;; x baaa x+y#" in
+      let evaluated = interp "go! test 3" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "6" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse with oink glob in function) body" >:: fun _ ->
+      let result = interp "workhorse test x # oink y = 3; baaa x+y#" in
+      let evaluated = interp "go! test 3" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "6" evaluated ~printer:(fun x -> x) );
+    ( "test workhorse with if in body" >:: fun _ ->
+      let result =
+        interp
+          "workhorse test [x;z] # oink y = x + z;; if y = 7 {oink h = 1;} else \
+           {oink h = 0;} baaa h#"
+      in
+      let evaluated = interp "go! test [3;4]" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "1" evaluated ~printer:(fun x -> x) );
+    ( "test setting variable to function output" >:: fun _ ->
+      let result = interp "workhorse test x # baaa x#" in
+      let _ = interp "oink s = go! test 0;" in
+      let evaluated_res = interp "s" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "0" evaluated_res ~printer:(fun x -> x) );
+    ( "test workhorse recursive" >:: fun _ ->
+      let result =
+        interp
+          "workhorse\n\
+          \       test [x;z] # oink y = x - 1;; if y = 0 {oink f = z;} else  \
+           {oink f = go!\n\
+          \       test [y;z+1];} baaa f#"
+      in
+      let evaluated = interp "go! test [3;0]" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "2" evaluated ~printer:(fun x -> x) );
   ]
 
 (* TODO TEST division MORE *)
 (* TODO TEST EDGE CASES FOR MATH OPERATIONS (int + float etc)*)
 let more_func_tests =
-  [ (* ( "test workhorse with if statements" >:: fun _ -> let result = interp
-       "workhorse test x # \n\ \ if x - 1 = 0 #oink y = 3#\n\ \ else #oink y =
-       4#\n\ \ baaa y#" in let evaluated = interp "go! add_example 0" in
-       assert_equal "Squeal" result ~printer:(fun x -> x); assert_equal "3"
-       evaluated ~printer:(fun x -> x) ); *)
+  [ (* ( "if statements " >:: fun _ -> let _ = interp "oink x = 4;" in let
+       result = interp "x - 1 = 3" in assert_equal "true" result ~printer:(fun x
+       -> x) ); *)
+
     (* ( "test workhorse recursive with math operations" >:: fun _ -> let result
        = interp "workhorse recursive x # \n\ \ if x - 1 = 0 #oink y = 3#\n\ \
        else ##\n\ \ baaa 5 + x#" in let evaluated = interp "go! add_example 3"
        in assert_equal "Squeal" result ~printer:(fun x -> x); assert_equal "8"
        evaluated ~printer:(fun x -> x) ); *) ]
 
-(* let tests = "test suite" >::: all_tests *)
-let tests = "test suite" >::: more_func_tests
+let tests = "test suite" >::: all_tests
+(* let tests = "test suite" >::: more_func_tests *)
 
 let pen_tests =
   [
