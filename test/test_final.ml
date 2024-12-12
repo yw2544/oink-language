@@ -412,15 +412,17 @@ let all_tests =
 (* TODO TEST division MORE *)
 (* TODO TEST EDGE CASES FOR MATH OPERATIONS (int + float etc)*)
 let more_func_tests =
-  [ (* ( "if statements " >:: fun _ -> let _ = interp "oink x = 4;" in let
-       result = interp "x - 1 = 3" in assert_equal "true" result ~printer:(fun x
-       -> x) ); *)
-
+  [
+    ( "if statements " >:: fun _ ->
+      let _ = interp "oink x = 4;" in
+      let result = interp "x - 1 = 3" in
+      assert_equal "true" result ~printer:(fun x -> x) );
     (* ( "test workhorse recursive with math operations" >:: fun _ -> let result
        = interp "workhorse recursive x # \n\ \ if x - 1 = 0 #oink y = 3#\n\ \
        else ##\n\ \ baaa 5 + x#" in let evaluated = interp "go! add_example 3"
        in assert_equal "Squeal" result ~printer:(fun x -> x); assert_equal "8"
-       evaluated ~printer:(fun x -> x) ); *) ]
+       evaluated ~printer:(fun x -> x) ); *)
+  ]
 
 let tests = "test suite" >::: all_tests
 (* let tests = "test suite" >::: more_func_tests *)
