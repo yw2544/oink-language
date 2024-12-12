@@ -29,6 +29,7 @@ type expr =
   | TroughSplit of expr * expr
   | Eq of expr * expr
   | If of expr * expr * expr
+  | Paren of expr
 (* Equality check *)
 (* Division *)
 

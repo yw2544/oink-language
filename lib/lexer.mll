@@ -15,7 +15,7 @@ let int = '-'? digit+
 
 let frac = '.' digit*
 let exp = ['e' 'E'] ['-' '+']? digit+
-let float = digit+ '.' digit+ (['e' 'E'] ['-' '+']? digit+)?
+let float = '-'? digit+ '.' digit+ (['e' 'E'] ['-' '+']? digit+)?
 
 let white = [' ' '\t']+
 let newline = '\r' | '\n' |"\r\n"
@@ -43,6 +43,9 @@ rule read =
     | ";" {SEP}
     | "["{PEN_START}
     | "]"{PEN_END}
+    | "^" {CONCAT}
+    | "(" {LPAREN}
+    | ")" {RPAREN}
     | "pigpile" { PIGPILE }
     | "+" {PIGPILE}
     | "snoutout" { SNOUTOUT }

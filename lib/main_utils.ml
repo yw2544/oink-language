@@ -105,7 +105,7 @@ let rec oink_sub id value expr outer_env =
   | Oink (x, e1, e2) when x = id -> Oink (x, oink_sub id value e1 outer_env, e2)
   | Oink (x, e1, e2) when x <> id ->
       Oink (x, oink_sub id value e1 outer_env, oink_sub id value e2 outer_env)
-  | expr -> step expr outer_env
+  | expr -> eval expr oink_env
 (* | And (e1, e2) -> And (oink_sub id value e1 outer_env, oink_sub id value e2
    outer_env) | Or (e1, e2) -> Or (oink_sub id value e1 outer_env, oink_sub id
    value e2 outer_env) *)
@@ -115,12 +115,15 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   print_endline ("Stepping expression: " ^ string_of_val e);
 
   match e with
-  | Int _ -> failwith "does not step"
+  | Int _ -> failwith "does not step int"
   | Float _ -> failwith "does not step"
   | String _ -> failwith "does not step"
-  | Boolean _ -> failwith "does not\n     step"
+  | Boolean _ -> failwith "does not step"
   | PenVal _ -> failwith "does not step"
   | Ident x -> Hashtbl.find env x
+  | Paren e1 ->
+      print_endline ("matched with paren" ^ string_of_val e1);
+      eval e1 env
   (* | Int i -> Int i | Float f -> Float f | String s -> String s | Boolean b ->
      Boolean b | PenVal p -> PenVal p *)
   (* Math operations *)
@@ -130,6 +133,7 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
       | Float f1, Float f2 -> Float (f1 +. f2)
       | Int i1, Float f2 -> Float (float_of_int i1 +. f2)
       | Float f1, Int i2 -> Float (f1 +. float_of_int i2)
+      | String s1, String s2 -> String (s1 ^ s2)
       | _ -> failwith "Type error in PigPile operation")
   | SnoutOut (e1, e2) when is_value e1 && is_value e2 -> (
       match (e1, e2) with
@@ -241,10 +245,10 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   | SnoutOut (e1, e2) when is_value e2 -> SnoutOut (step e1 env, e2)
   | SnoutOut (e1, e2) -> SnoutOut (step e1 env, step e2 env)
   | MudMultiply (e1, e2) when is_value e1 -> MudMultiply (e1, step e2 env)
-  | MudMultiply (e1, e2) when is_value e1 -> MudMultiply (step e1 env, e2)
+  | MudMultiply (e1, e2) when is_value e2 -> MudMultiply (step e1 env, e2)
   | MudMultiply (e1, e2) -> MudMultiply (step e1 env, step e2 env)
   | TroughSplit (e1, e2) when is_value e1 -> TroughSplit (e1, step e2 env)
-  | TroughSplit (e1, e2) when is_value e1 -> TroughSplit (step e1 env, e2)
+  | TroughSplit (e1, e2) when is_value e2 -> TroughSplit (step e1 env, e2)
   | TroughSplit (e1, e2) -> TroughSplit (step e1 env, step e2 env)
   | And (e1, e2) when is_value e1 && is_value e2 -> (
       match (e1, e2) with

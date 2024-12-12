@@ -32,6 +32,14 @@
 %token ELSE
 %token BRAC_END
 %token BRAC_START
+%token RPAREN
+%token LPAREN
+%token CONCAT
+
+%nonassoc EQ LPAREN RPAREN
+%left OR AND CONCAT
+%left PIGPILE SNOUTOUT 
+%left MUDMULTIPLY TROUGHSPLIT
 
 %start <Ast.expr> prog
 %type <Ast.expr> expr
@@ -49,7 +57,7 @@ prog:
 ;
 
 expr:
-
+| LPAREN e = expr RPAREN {e}
 | OINK id = IDENT EQ e1 = expr MUD e2 = expr {Oink (id, e1, e2)}
 | OINK id = IDENT EQ e1 = expr SEP {OinkGlob (id, e1)}
 | PEN_START PEN_END { Pen [] }  (* Handle empty list *)
@@ -60,6 +68,7 @@ expr:
 | WORKHORSE id = IDENT mot = IDENT GATE body=expr BAAA return=expr GATE { 
     OinkGlob (id, Workhorse (Pen [Ident mot], body, return)) 
 }
+| e1 = expr CONCAT e2 = expr { PigPile (e1, e2) }
 
 | WORKHORSE id = IDENT mot = IDENT GATE body=separated_nonempty_list(SEP,expr) BAAA return=expr GATE {OinkGlob (id,Workhorse (Pen [Ident mot],Pen body,return))}
 | WORKHORSE id = IDENT mot = IDENT GATE BAAA return=expr GATE {OinkGlob (id,Workhorse (Pen [Ident mot],Squeal,return))}

@@ -3,8 +3,6 @@ open Final.Ast
 open Printf
 module StringMap = Map.Make (String)
 
-let symbol_table = ref StringMap.empty
-
 let print_pig () =
   print_endline "  \\   ^__^";
   print_endline "   \\  (oo)\\\\_______";
@@ -51,16 +49,16 @@ let pig_translate (ast : expr) : string =
       | _ -> "*OINK* Type error in Or expression! *OINK*")
   | Ident id -> (
       try
-        match StringMap.find id !symbol_table with
+        match Hashtbl.find global_env id with
         | String s -> "*SNORT* " ^ s ^ " *SNORT*"
         | Int i -> "*SNORT* " ^ string_of_int i ^ " *SNORT*"
         | Float f -> "*SNORT* " ^ string_of_float f ^ " *SNORT*"
         | Boolean b -> "*SNORT* " ^ string_of_bool b ^ " *SNORT*"
         | _ -> "*SNORT* Sorry, I can't understand that yet! Oink Oink~"
       with Not_found -> "*SNORT* Unbound identifier: " ^ id ^ " *SNORT*")
-  | Oink (id, e1, e2) ->
-      let value = eval e1 in
-      symbol_table := StringMap.add id value !symbol_table;
+  | Oink (id, e1, _) | OinkGlob (id, e1) ->
+      let value = eval e1 global_env in
+      Hashtbl.add global_env id value;
       let value_str =
         match value with
         | String s -> s
@@ -80,15 +78,31 @@ let main () =
   let rec repl () =
     print_string
       "You may do one of the following:\n\
-       1) Enter a string with quotes (e.g. \"hi\"))for piggy to interpret\n\
-       2) Write a extremely simple oink expression (let expression \
-       equivalent). The Syntax is oink n = e1 mud e2. \n\
-      \   a) After defining an identifier, can print out the identifier value \
-       by simplying type in the identifier name\n\
-       3) Write a boolean And/Or expression (e.g. true and false).\n\
-       4) type 'exit' to quit )): ";
+       1) Enter a string with quotes (e.g. \"hi\") for piggy to interpret\n\
+       2) Write an Oink expression (let expression equivalent) to define a \
+       variable. The Syntax is\" oink n = e1 mud e2\" or \"oink y = 5\". \n\
+       3) View the list of defined vairbale by typing 'env'.\n\
+       4) Remove a variable by typing 'remove <var>'.\n\
+       5) Write a boolean And/Or expression (e.g. true and false).\n\
+       6) type 'exit' to quit )): ";
     let input = read_line () in
     if input = "exit" then print_endline "Byebye! Oink oink~"
+    else if input = "env" then (
+      print_endline "Current list of defined variables:";
+      print_hashtable global_env;
+      print_pig ();
+      repl ())
+    else if String.length input >= 7 && String.sub input 0 7 = "remove " then (
+      let var = String.sub input 7 (String.length input - 7) in
+      if Hashtbl.mem global_env var then (
+        Hashtbl.remove global_env var;
+        print_endline ("*OINK* Removed " ^ var ^ " from the environment! *OINK*");
+        print_pig ())
+      else (
+        print_endline
+          ("*OINK* Cannot remove because no such variable: " ^ var ^ " *SNORT*");
+        print_pig ());
+      repl ())
     else
       try
         (*let interped = interp input in print_endline ("result: " ^
