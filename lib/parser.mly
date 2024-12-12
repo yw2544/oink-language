@@ -59,6 +59,7 @@ prog:
 expr:
 | LPAREN e = expr RPAREN {e}
 | OINK id = IDENT EQ e1 = expr MUD e2 = expr {Oink (id, e1, e2)}
+// | OINK id = IDENT EQ e1 = expr {OinkGlob (id, e1)}
 | OINK id = IDENT EQ e1 = expr SEP {OinkGlob (id, e1)}
 | PEN_START PEN_END { Pen [] }  (* Handle empty list *)
 | PEN_START lst = expr_list PEN_END { Pen lst }  (* Handle non-empty list *)
