@@ -4,9 +4,9 @@ open Printf
 module StringMap = Map.Make (String)
 
 let print_pig () =
-  print_endline "  \\   ^__^";
-  print_endline "   \\  (oo)\\\\_______";
-  print_endline "      (__)\\\\       )\\/\\";
+  print_endline "  \\    ^ _ _ ^";
+  print_endline "   \\  (  oo    )\\\\_______";
+  print_endline "        (______)\\\\       )\\/\\";
   print_endline "          ||----w |"
 
 let pigify (s : string) : string =
@@ -71,6 +71,39 @@ let pig_translate (ast : expr) : string =
   | _ ->
       "*SNORT* Sorry, I can only interpret strings and boolean now! Oink Oink~"
 
+let file_parser (filename : string) : unit =
+  try
+    let in_channel = open_in filename in
+    let rec process_lines buffer =
+      match input_line in_channel with
+      | exception End_of_file ->
+          if buffer <> "" then process_line (String.trim buffer);
+          close_in in_channel;
+          print_endline "*OINK* Finished processing file! *OINK*"
+      | line ->
+          let trimmed_line = String.trim line in
+          if trimmed_line = "" || String.starts_with ~prefix:"#" trimmed_line
+          then process_lines buffer
+          else if String.ends_with ~suffix:";" trimmed_line then (
+            let full_line =
+              buffer ^ " "
+              ^ String.sub trimmed_line 0 (String.length trimmed_line - 1)
+            in
+            process_line (String.trim full_line);
+            process_lines "")
+          else process_lines (buffer ^ " " ^ trimmed_line)
+    and process_line line =
+      try
+        print_endline ("Processing: " ^ line);
+        let result = interp line in
+        print_endline ("Result: " ^ result)
+      with
+      | Failure msg -> print_endline ("Error: " ^ msg)
+      | Final.Lexer.SyntaxError msg -> print_endline ("Syntax Error: " ^ msg)
+    in
+    process_lines ""
+  with Sys_error msg -> print_endline ("Error opening file: " ^ msg)
+
 let main () =
   print_endline "Welcome to the Pig Interpreter! Oink oink~";
   print_pig ();
@@ -82,11 +115,46 @@ let main () =
        2) Write an Oink expression (let expression equivalent) to define a \
        variable. The Syntax is\" oink n = e1 mud e2\" or \"oink y = 5\". \n\
        3) View the list of defined vairbale by typing 'env'.\n\
-       4) Remove a variable by typing 'remove <var>'.\n\
-       5) Write a boolean And/Or expression (e.g. true and false).\n\
-       6) type 'exit' to quit )): ";
+       4) View the supported operations for our pen (list) by typing 'list \
+       help'.\n\
+       5) Remove a variable by typing 'remove <var>'.\n\
+       6) Write a boolean And/Or expression (e.g. true and false).\n\
+       7) Parse a oink file by typing 'file <filename>'.\n\
+       8) type 'exit' to quit )): ";
     let input = read_line () in
     if input = "exit" then print_endline "Byebye! Oink oink~"
+    else if input = "list help" then (
+      print_endline "*OINK* List Operations Guide *OINK*";
+      print_endline "Oink supports the following list (Pen) operations:";
+      print_endline "1. PenPen: Concatenates two lists.";
+      print_endline "   Syntax: [list1] penpen [list2]";
+      print_endline "   Example: [1; 2] penpen [3; 4]";
+      print_endline "   Result: pen: [1, 2, 3, 4]";
+      print_endline "";
+      print_endline "2. Ppen: Prepends an element to a list.";
+      print_endline "   Syntax: element ppen [list]";
+      print_endline "   Example: 1 ppen [2; 3]";
+      print_endline "   Result: pen: [1, 2, 3]";
+      print_endline "";
+      print_endline "3. PenSnatch: Removes an element by index.";
+      print_endline "   Syntax: [list] pensnatch index";
+      print_endline "   Example: [1; 2; 3] pensnatch 1";
+      print_endline "   Result: pen: [1, 3]";
+      print_endline "";
+      print_endline "4. PenSqueal: Gets the first element.";
+      print_endline "   Syntax: [list] pensqueal";
+      print_endline "   Example: [1; 2; 3] pensqueal";
+      print_endline "   Result: 1";
+      print_endline "";
+      print_endline "5. PenLength: Gets the length of the list.";
+      print_endline "   Syntax: [list] penlength";
+      print_endline "   Example: [1; 2; 3] penlength";
+      print_endline "   Result: 3";
+      print_endline "";
+      print_endline
+        "*OINK* Try these operations in the REPL or your Oink file! *OINK*";
+      print_pig ();
+      repl ())
     else if input = "env" then (
       print_endline "Current list of defined variables:";
       print_hashtable global_env;
@@ -102,6 +170,10 @@ let main () =
         print_endline
           ("*OINK* Cannot remove because no such variable: " ^ var ^ " *SNORT*");
         print_pig ());
+      repl ())
+    else if String.length input >= 5 && String.sub input 0 5 = "file " then (
+      let filename = String.sub input 5 (String.length input - 5) in
+      file_parser filename;
       repl ())
     else
       try

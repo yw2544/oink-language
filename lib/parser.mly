@@ -26,8 +26,6 @@
 %token PENSNATCH
 %token PENSQUEAL
 %token PENLENGTH
-%token PENFILTER
-%token PENREAP
 %token IF
 %token ELSE
 %token BRAC_END
@@ -117,9 +115,6 @@ expr:
     PenSqueal e
 }
 | e = expr PENLENGTH { PenLength (e) }
-| e1 = expr PENFILTER GO id = IDENT { PenFilter (e1, Go (id, Ident id)) }
-| e1 = expr PENFILTER e2 = expr { PenFilter (e1, e2) }
-| e1 = expr PENREAP e2 = expr { PenReap (e1, e2) }
 
 
 ;

@@ -24,8 +24,6 @@ let parse (s : string) : expr =
     | PenSnatch _ -> print_endline "Parsed Pen remove operation."
     | PenSqueal _ -> print_endline "Parsed Pen get element operation."
     | PenLength _ -> print_endline "Parsed Pen length operation."
-    | PenFilter _ -> print_endline "Parsed Pen filter operation."
-    | PenReap _ -> print_endline "Parsed Pen map operation."
     | _ -> print_endline "Parsed another type of expression.");
     ast
   with
@@ -78,10 +76,6 @@ let rec string_of_val (e : expr) : string =
       "PenSnatch(" ^ string_of_val e1 ^ ", " ^ string_of_val e2 ^ ")"
   | PenSqueal e -> "PenSqueal(" ^ string_of_val e ^ ")"
   | PenLength e -> "PenLength(" ^ string_of_val e ^ ")"
-  | PenFilter (e1, e2) ->
-      "PenFilter(" ^ string_of_val e1 ^ ", " ^ string_of_val e2 ^ ")"
-  | PenReap (e1, e2) ->
-      "PenReap(" ^ string_of_val e1 ^ ", " ^ string_of_val e2 ^ ")"
   | _ -> "currently unsupported"
 
 let is_value : expr -> bool = function
@@ -200,44 +194,6 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   | PenSqueal e -> PenSqueal (step e env)
   | PenLength (Pen lst) -> Int (List.length lst)
   | PenLength e -> PenLength (step e env)
-  | PenFilter (Pen lst, filter_fn) ->
-      let fn = eval filter_fn env in
-      let filtered_lst =
-        List.filter
-          (fun e ->
-            match fn with
-            | WorkhorseVal (Workhorse (Pen [ Ident param ], body, _), fn_env)
-              -> (
-                let new_env = Hashtbl.copy fn_env in
-                Hashtbl.add new_env param e;
-                (* Evaluate the body with the updated environment *)
-                match eval body new_env with
-                | Boolean true -> true
-                | Boolean false -> false
-                | _ -> failwith "PenFilter: Function must return a Boolean")
-            | _ -> failwith "PenFilter: Expected a workhorse function")
-          lst
-      in
-      Pen filtered_lst
-  | PenFilter (e1, e2) when is_value e1 -> PenFilter (e1, step e2 env)
-  | PenFilter (e1, e2) -> PenFilter (step e1 env, e2)
-  | PenReap (Pen lst, reap_fn) ->
-      let fn = eval reap_fn env in
-      let mapped_lst =
-        List.map
-          (fun e ->
-            match fn with
-            | WorkhorseVal (Workhorse (Pen [ Ident param ], body, _), fn_env) ->
-                let new_env = Hashtbl.copy fn_env in
-                Hashtbl.add new_env param e;
-                eval body new_env
-            | _ -> failwith "PenReap: Expected a function")
-          lst
-      in
-      Pen mapped_lst
-  | PenReap (e1, e2) when is_value e1 -> PenReap (e1, step e2 env)
-  | PenReap (e1, e2) -> PenReap (step e1 env, e2)
-  (* Handle cases where arguments are not yet evaluated *)
   | PigPile (e1, e2) when is_value e1 -> PigPile (e1, step e2 env)
   | PigPile (e1, e2) when is_value e2 -> PigPile (step e1 env, e2)
   | PigPile (e1, e2) -> PigPile (step e1 env, step e2 env)

@@ -579,17 +579,18 @@ let tests = "test suite" >::: combined_tests
 
 let pen_tests =
   [
-    (* PenFilter - Use a workhorse function to filter elements greater than 3 *)
-    ( "PenFilter using workhorse to filter elements greater than 3" >:: fun _ ->
-      let workhorse_def =
-        interp "workhorse greater_than_three x # x snoutout 3 baaa true#"
+    ( "test penfilter operation" >:: fun _ ->
+      let result =
+        interp
+          "workhorse filter_fn x # if x = 2 {oink f = true;} else {oink f = \
+           false;} baaa f#"
       in
-      let filtered_result =
-        interp "[1; 2; 3; 4; 5; 6] penfilter go! greater_than_three"
+      let _ =
+        interp "oink filtered_list = [1; 2; 3; 4] penfilter go! filter_fn;"
       in
-      assert_equal "pen: [4, 5, 6]" filtered_result ~printer:(fun x -> x);
-      assert_equal "Squeal" workhorse_def ~printer:(fun x -> x) );
+      let evaluated_res = interp "filtered_list" in
+      assert_equal "Squeal" result ~printer:(fun x -> x);
+      assert_equal "pen: [3, 4]" evaluated_res ~printer:(fun x -> x) );
   ]
 
-(* let _ = run_test_tt_main ("penP tests" >::: pen_tests) *)
 let _ = run_test_tt_main tests

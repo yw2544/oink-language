@@ -59,8 +59,6 @@ rule read =
     | "pensnatch" { PENSNATCH }
     | "pensqueal" { PENSQUEAL }
     | "penlength" { PENLENGTH }
-    | "penfilter" { PENFILTER }
-    | "penreap" { PENREAP }
     | "if" {IF}
     | "else" {ELSE}
 
