@@ -5,7 +5,6 @@ let global_env = Hashtbl.create 100
 
 (**[parse s] parses [s] into an AST.*)
 let parse (s : string) : expr =
-  print_endline ("Parsing input: " ^ s);
   let lexbuf = Lexing.from_string s in
   try
     let ast = Parser.prog Lexer.read lexbuf in
@@ -45,15 +44,11 @@ let rec string_of_val (e : expr) : string =
       let s =
         "pen: [" ^ String.concat ", " (List.map string_of_val lst) ^ "]"
       in
-      (* Uncomment the following line for debug logging if needed *)
-      (* print_endline ("string_of_val (Pen): " ^ s); *)
       s
   | PenVal lst ->
       let s =
         "pen: [" ^ String.concat ", " (List.map string_of_val lst) ^ "]"
       in
-      (* Uncomment the following line for debug logging if needed *)
-      (* print_endline ("string_of_val (PenVal): " ^ s); *)
       s
   | Oink (id, e1, e2) -> "oink"
   | Ident _ -> "ident"
@@ -100,9 +95,6 @@ let rec oink_sub id value expr outer_env =
   | Oink (x, e1, e2) when x <> id ->
       Oink (x, oink_sub id value e1 outer_env, oink_sub id value e2 outer_env)
   | expr -> eval expr oink_env
-(* | And (e1, e2) -> And (oink_sub id value e1 outer_env, oink_sub id value e2
-   outer_env) | Or (e1, e2) -> Or (oink_sub id value e1 outer_env, oink_sub id
-   value e2 outer_env) *)
 
 (**[step e] takes a sigle step of evaluation of [e].*)
 and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
@@ -118,9 +110,6 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   | Paren e1 ->
       print_endline ("matched with paren" ^ string_of_val e1);
       eval e1 env
-  (* | Int i -> Int i | Float f -> Float f | String s -> String s | Boolean b ->
-     Boolean b | PenVal p -> PenVal p *)
-  (* Math operations *)
   | PigPile (e1, e2) when is_value e1 && is_value e2 -> (
       match (e1, e2) with
       | Int i1, Int i2 -> Int (i1 + i2)
@@ -153,7 +142,6 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
       | Float f1, Int i2 -> Float (f1 /. float_of_int i2)
       | _ -> failwith "Invalid TroughSplit expression")
   | Eq (e1, e2) -> (
-      print_endline "within EQ";
       let v1 = eval e1 env in
       let v2 = eval e2 env in
       match (v1, v2) with
@@ -163,22 +151,11 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
       | Boolean b1, Boolean b2 -> Boolean (b1 = b2)
       | _, _ -> failwith "*OINK* Type error in Eq expression! Oink Oink~ *OINK*"
       )
-  | PenPen (PenVal lst1, PenVal lst2) ->
-      print_endline "PenPen: Merging two Pen lists...";
-      print_endline ("Pen lst1: " ^ string_of_val (Pen lst1));
-      print_endline ("Pen lst2: " ^ string_of_val (Pen lst2));
-      print_endline ("Pen lst2: " ^ string_of_val (Pen (lst1 @ lst2)));
-      PenVal (lst1 @ lst2)
+  | PenPen (PenVal lst1, PenVal lst2) -> PenVal (lst1 @ lst2)
   | PenPen (Pen lst1, Pen lst2)
     when List.for_all is_value lst1 && List.for_all is_value lst2 ->
-      print_endline "PenPen: Merging two Pen lists...";
-      print_endline ("Pen lst1: " ^ string_of_val (Pen lst1));
-      print_endline ("Pen lst2: " ^ string_of_val (Pen lst2));
-      print_endline ("Pen lst2: " ^ string_of_val (Pen (lst1 @ lst2)));
       PenVal (lst1 @ lst2)
-  | PenPen (Pen lst1, Pen lst2) ->
-      print_endline "Evaluating PenPen with Pen lists...";
-      PenPen (pen_eval lst1 env, pen_eval lst2 env)
+  | PenPen (Pen lst1, Pen lst2) -> PenPen (pen_eval lst1 env, pen_eval lst2 env)
   | Ppen (x, PenVal lst) -> PenVal (x :: lst)
   | Ppen (x, Pen lst) -> PenVal (x :: lst)
   | PenSnatch (Pen lst, Int i) ->
@@ -238,14 +215,10 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
         let value = step e1 env in
         oink_sub id value e2 env
   | OinkGlob (id, e1) ->
-      print_endline ("adding to global env: " ^ id);
       Hashtbl.add env id (eval e1 env);
       Squeal
-  | Go (id, PenVal lst) ->
-      print_endline "about to call apply";
-      apply id lst env
+  | Go (id, PenVal lst) -> apply id lst env
   | Go (id, Pen lst) ->
-      print_endline "calling pen eval_lst";
       let lst = pen_eval_lst lst env in
       apply id lst env
   | Go (id, x) -> apply id [ x ] env
@@ -261,15 +234,12 @@ and apply id apply_lst current_outer =
         (func, func_env)
     | _ -> failwith "failure in function application"
   in
-  print_endline "within apply";
   try
     let func_and_env = find_func_and_env () in
     let func = fst func_and_env in
     let func_env = snd func_and_env in
-    print_endline "within apply in try";
     match func with
     | Workhorse (Pen def_lst, body, return_expr) ->
-        print_endline "matched with workhorse";
         let def_lst_string =
           List.map
             (function
@@ -277,18 +247,13 @@ and apply id apply_lst current_outer =
               | _ -> failwith "Expected Ident in Pen")
             def_lst
         in
-        print_endline "before adding to env";
         let add_to_table var_name var_value =
           Hashtbl.add func_env var_name var_value
         in
         List.iter print_endline def_lst_string;
         let print_element e = print_endline (string_of_val e) in
         List.iter print_element apply_lst;
-        Printf.printf "The length of apply_lst is %d\n" (List.length apply_lst);
         List.iter2 add_to_table def_lst_string apply_lst;
-        print_endline "after adding to env";
-        print_hashtable func_env;
-        print_endline "_____";
         if not (is_value body) then
           let _ = step body func_env in
           if is_value return_expr then return_expr
@@ -299,14 +264,6 @@ and apply id apply_lst current_outer =
   with Not_found ->
     failwith ("apply: Function ID not found: " ^ id ^ " or some other error")
 
-(* and pen_eval lst env = print_endline "within pen_eval"; print_endline
-   "calling pen eval_lst"; let lst = pen_eval_lst lst env in let print_element e
-   = print_endline (string_of_val e) in List.iter print_element lst;
-   print_endline "fin eval_lst"; PenVal lst *)
-
-(* and pen_eval_lst lst env = let f e = if is_value e then e else step e env in
-   Printf.printf "WITHIN PEN_EVAL_LIST The length of input list is %d\n"
-   (List.length lst); List.map f lst *)
 and pen_eval lst env =
   if List.for_all is_value lst then PenVal lst
   else
@@ -314,25 +271,14 @@ and pen_eval lst env =
     PenVal evaluated_lst
 
 and pen_eval_lst lst env =
-  let f e =
-    if is_value e then e
-    else (
-      print_endline ("Evaluating: " ^ string_of_val e);
-      step e env)
-  in
-  print_endline
-    ("Evaluating Pen list of length " ^ string_of_int (List.length lst));
+  let f e = if is_value e then e else step e env in
   List.map f lst
 
 and if_eval e e1 e2 env =
   let cond = eval e env in
   match cond with
-  | Boolean true ->
-      print_endline "cond true";
-      eval e1 env
-  | Boolean false ->
-      print_endline "cond false";
-      eval e2 env
+  | Boolean true -> eval e1 env
+  | Boolean false -> eval e2 env
   | _ -> failwith "if statement condition evaluation error."
 
 and eval (e : expr) (env : (string, expr) Hashtbl.t) : expr =
