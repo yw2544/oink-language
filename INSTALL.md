@@ -30,7 +30,8 @@ When you start the program, the interpreter enters an interactive mode where you
 
 ### File Parsing
 
-You can parse and execute an Oink source file using the `file` command.
+You can parse and execute an Oink source file using the `file` command. 
+Note that most operations are not directly supported by driver program; Users are expected to test them in file.
 
 #### File Format
 
