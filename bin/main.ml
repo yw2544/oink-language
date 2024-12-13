@@ -69,8 +69,8 @@ let pig_translate (ast : expr) : string =
       in
       "*OINK* Identifier " ^ id ^ " defined as " ^ value_str ^ " ! *OINK*"
   | _ ->
-      "*SNORT* Sorry, I can only interpret strings, booleans and files now! \
-       Oink Oink~"
+      "*SNORT* Sorry, I can only interpret strings, variables, boolean, and \
+       file now! Oink Oink~"
 
 let file_parser (filename : string) : unit =
   try
@@ -114,13 +114,16 @@ let main () =
       "You may do one of the following:\n\
        1) Enter a string with quotes (e.g. \"hi\") for piggy to interpret\n\
        2) Write an Oink expression (let expression equivalent) to define a \
-       variable. The Syntax is\" oink n = e1 mud e2\" or \"oink y = 5\". \n\
+       variable. The Syntax is\" oink n = e1 mud e2\" or \"oink y = 5;\". \n\
+       NOTE: \" ; \" is REQUIRED for \"oink x = XX; \" not required if using \
+       \"oink x = XX mud XX\" \n\
+      \ that is, if you have \"mud\" no need to add \"; \" at the end\n\
        3) View the list of defined vairbale by typing 'env'.\n\
-       4) View the supported operations for our pen (list) by typing 'list \
-       help'.\n\
-       5) Remove a variable by typing 'remove <var>'.\n\
-       6) Write a boolean And/Or expression (e.g. true and false).\n\
-       7) Parse a oink file by typing 'file <filename>'.\n\
+       4) Remove a variable by typing 'remove <var>'.\n\
+       5) Write a boolean And/Or expression (e.g. true and false).\n\
+       6) View the supported operations for our pen (list) by typing 'list \
+       help' in oink file ONLY. Not supported in driver program.\n\
+       7) Parse a oink file by typing 'file folder/<filename>'.\n\
        8) type 'exit' to quit )): ";
     let input = read_line () in
     if input = "exit" then print_endline "Byebye! Oink oink~"
