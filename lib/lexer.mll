@@ -1,4 +1,5 @@
 {
+    [@@@ coverage off]
     open Parser
 
     exception SyntaxError of string

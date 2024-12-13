@@ -1,3 +1,6 @@
+%{
+[@@@ coverage off]
+%}
 %token OINK
 %token WORKHORSE
 %token BAAA
