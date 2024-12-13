@@ -6,26 +6,9 @@ let global_env = Hashtbl.create 100
 (**[parse s] parses [s] into an AST.*)
 let parse (s : string) : expr =
   let lexbuf = Lexing.from_string s in
-  try
-    let ast = Parser.prog Lexer.read lexbuf in
-    (match ast with
-    | Int _ -> print_endline "Parsed an integer."
-    | Float _ -> print_endline "Parsed a float."
-    | String _ -> print_endline "Parsed a string."
-    | Ident _ -> print_endline "Parsed an identifier."
-    | PigPile _ -> print_endline "Parsed PigPile operation."
-    | SnoutOut _ -> print_endline "Parsed SnoutOut operation."
-    | MudMultiply _ -> print_endline "Parsed MudMultiply operation."
-    | TroughSplit _ -> print_endline "Parsed TroughSplit operation."
-    | Eq _ -> print_endline "Parsed EQ operation."
-    | PenPen _ -> print_endline "Parsed Pen append operation."
-    | Ppen _ -> print_endline "Parsed Pen prepend operation."
-    | PenSnatch _ -> print_endline "Parsed Pen remove operation."
-    | PenSqueal _ -> print_endline "Parsed Pen get element operation."
-    | PenLength _ -> print_endline "Parsed Pen length operation."
-    | _ -> print_endline "Parsed another type of expression.");
-    ast
-  with
+  try let ast = Parser.prog Lexer.read lexbuf in
+
+      ast with
   | Parser.Error ->
       print_endline "Parsing error: Invalid syntax.";
       raise (Failure "Parsing error")
@@ -98,8 +81,6 @@ let rec oink_sub id value expr outer_env =
 
 (**[step e] takes a sigle step of evaluation of [e].*)
 and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
-  print_endline ("Stepping expression: " ^ string_of_val e);
-
   match e with
   | Int _ -> failwith "does not step int"
   | Float _ -> failwith "does not step"
@@ -107,9 +88,7 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
   | Boolean _ -> failwith "does not step"
   | PenVal _ -> failwith "does not step"
   | Ident x -> Hashtbl.find env x
-  | Paren e1 ->
-      print_endline ("matched with paren" ^ string_of_val e1);
-      eval e1 env
+  | Paren e1 -> eval e1 env
   | PigPile (e1, e2) when is_value e1 && is_value e2 -> (
       match (e1, e2) with
       | Int i1, Int i2 -> Int (i1 + i2)
@@ -187,8 +166,6 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
       match (e1, e2) with
       | Boolean b1, Boolean b2 ->
           let result = Ast.Boolean (b1 && b2) in
-          if b1 && b2 then print_endline "*OINK* Both true, so true! *OINK*"
-          else print_endline "*SNORT* One or both false, so false! *SNORT*";
           result
       | _ -> failwith "*OINK* Type error in And expression! Oink Oink~ *OINK*")
   | And (e1, e2) when is_value e1 -> And (e1, step e2 env)
@@ -197,9 +174,6 @@ and step (e : expr) (env : (string, expr) Hashtbl.t) : expr =
       match (e1, e2) with
       | Boolean b1, Boolean b2 ->
           let result = Ast.Boolean (b1 || b2) in
-          if b1 || b2 then
-            print_endline "*OINK* At least one is true, so true! *OINK*"
-          else print_endline "*SNORT* Both false, so false! *SNORT*";
           result
       | _ -> failwith "*OINK* Type error in Or expression! Oink Oink~ *OINK*")
   | Or (e1, e2) when is_value e1 -> Or (e1, step e2 env)
@@ -250,9 +224,6 @@ and apply id apply_lst current_outer =
         let add_to_table var_name var_value =
           Hashtbl.add func_env var_name var_value
         in
-        List.iter print_endline def_lst_string;
-        let print_element e = print_endline (string_of_val e) in
-        List.iter print_element apply_lst;
         List.iter2 add_to_table def_lst_string apply_lst;
         if not (is_value body) then
           let _ = step body func_env in
