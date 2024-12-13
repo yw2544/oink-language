@@ -22,10 +22,15 @@ demo-video-url: "https://youtu.be/p2OKi29x2YI"
 # Write a short, attention-grabbing description of your project.
 desc: >
   Our project is an interactive pig-theme interpreter. It supports string handling,
-  boolean expressions (such as and and or), and basic data evaluation. The interface
-  is designed to be engaging and user-friendly, featuring a cute pig figure that 
-  interacts with the user through pig-themed messages.
+  boolean expressions (such as and and or), basic data evaluation, and file parsing.
+  The interface is designed to be engaging and user-friendly, featuring a cute pig 
+  figure that interacts with the user through pig-themed messages.
   
   Users can input strings or boolean expressions and the interpreter will evaluate 
   and respond accordinngly. The Pig Interpreter is intented to provide an enjoyable
-  way to interact with fundamental programming concepts.
+  way to interact with fundamental programming concepts. To further enhance its cap
+  abilities, we have implemented a file parser that allows users to execute Oink co
+  de directly from external files. File parsing now supports a wide range of features, 
+  including string handling, boolean expressions (such as and and or), mathematical 
+  operations (addition, subtraction, multiplication, and division), and list manipulation 
+  operations (getting length, inserting, prepending, and appending). 
