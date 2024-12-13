@@ -18,7 +18,7 @@ title: "The Fantastic Pig Interpreter"
 # OK if this is a Cornell Github link, but public gallery viewers won't be able to see it.
 git-repo: "https://github.coecis.cornell.edu/yl3647/cs3110-final-project"
 # Replace the URL with your own demo video.
-demo-video-url: "https://youtu.be/a-cWhK6A18c"
+demo-video-url: "https://youtu.be/p2OKi29x2YI"
 # Write a short, attention-grabbing description of your project.
 desc: >
   Our project is an interactive pig-theme interpreter. It supports string handling,
