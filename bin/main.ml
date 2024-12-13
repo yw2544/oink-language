@@ -69,7 +69,8 @@ let pig_translate (ast : expr) : string =
       in
       "*OINK* Identifier " ^ id ^ " defined as " ^ value_str ^ " ! *OINK*"
   | _ ->
-      "*SNORT* Sorry, I can only interpret strings and boolean now! Oink Oink~"
+      "*SNORT* Sorry, I can only interpret strings, booleans and files now! \
+       Oink Oink~"
 
 let file_parser (filename : string) : unit =
   try

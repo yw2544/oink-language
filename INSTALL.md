@@ -16,17 +16,29 @@ dune exec bin/main.exe
 
 3. Interact with the Pig Interpreter
 
-Once the program starts, you can interact with it in three different ways:
+Once the program starts, you can interact with it in different ways:
 
 ## Features
 
-### 1. Interactive REPL
+Interactive REPL
 
 When you start the program, the interpreter enters an interactive mode where you can:
 
 - **Evaluate Strings:** Enter strings in quotes (e.g., `"hello"`) for processing.
-- **Assign Variables:** Use the syntax `oink x = 5;` to assign variables.
+- **Assign Variables:** Use the syntax `oink x = 5;` to assign variables. (the ';' is required)
 - **Boolean Logic:** Write expressions like `true and false` or `true or false`.
+
+### File Parsing
+
+You can parse and execute an Oink source file using the `file` command.
+
+#### File Format
+
+- Write Oink code line by line, separating statements with a `;`.
+- Comments can be added with `#`.
+
+- Functionality Add On & syntax explanation
+
 - **Mathematical Operations:**
   - Addition: `3 pigpile 5`
   - Subtraction: `10 snoutout 4`
@@ -49,21 +61,12 @@ When you start the program, the interpreter enters an interactive mode where you
   if true { oink x = 1; } else { oink x = 2; }
   ```
 
-### 2. File Parsing
-
-You can parse and execute an Oink source file using the `file` command.
-
-#### File Format
-
-- Write Oink code line by line, separating statements with a `;`.
-- Comments can be added with `#`.
-
 #### Example File (`test_input_demo.oink`):
 ```oink
 # This is a comment
 oink x = 5;
 oink y = x pigpile 10;
-if y snoutout 5 { oink z = true; } else { oink z = false; }
+if y snoutout 5 { oink z = true; } else { oink z = false; };
 ```
 
 #### Parsing the File
