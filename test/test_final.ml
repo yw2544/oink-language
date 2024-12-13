@@ -559,38 +559,84 @@ let all_tests =
       assert_equal "2" evaluated ~printer:(fun x -> x) );
   ]
 
-(* TODO TEST division MORE *)
-(* TODO TEST EDGE CASES FOR MATH OPERATIONS (int + float etc)*)
 let more_func_tests =
   [
     ( "if statements " >:: fun _ ->
       let _ = interp "oink x = 4;" in
       let result = interp "x - 1 = 3" in
       assert_equal "true" result ~printer:(fun x -> x) );
-    (* ( "test workhorse recursive with math operations" >:: fun _ -> let result
-       = interp "workhorse recursive x # \n\ \ if x - 1 = 0 #oink y = 3#\n\ \
-       else ##\n\ \ baaa 5 + x#" in let evaluated = interp "go! add_example 3"
-       in assert_equal "Squeal" result ~printer:(fun x -> x); assert_equal "8"
-       evaluated ~printer:(fun x -> x) ); *)
   ]
 
-let combined_tests = all_tests @ more_func_tests
+let test_string_of_val =
+  "test_string_of_val"
+  >::: List.map
+         (fun (input, expected) ->
+           let name =
+             Printf.sprintf "string_of_val %s -> %s" (string_of_val input)
+               expected
+           in
+           name >:: fun _ ->
+           assert_equal ~printer:(fun x -> x) expected (string_of_val input))
+         [
+           (Int 42, "42");
+           (String "hello", "hello");
+           (Float 3.14, "3.1");
+           (Boolean true, "true");
+           (Boolean false, "false");
+           (Pen [ Int 1; Int 2; Int 3 ], "pen: [1, 2, 3]");
+           (PenVal [ String "a"; String "b" ], "pen: [a, b]");
+           (Oink ("id", Int 1, Int 2), "oink");
+           (Ident "x", "ident");
+           (And (Boolean true, Boolean false), "and");
+           (Or (Boolean true, Boolean false), "or");
+           (Squeal, "Squeal");
+           ( Workhorse (Pen [ Int 1 ], Int 2, Int 3),
+             "workhorse input: currently can't print" );
+           (PigPile (Int 1, Int 2), "pigpile(1, 2)");
+           (SnoutOut (String "a", String "b"), "snoutout(a, b)");
+           (MudMultiply (Float 1.1, Float 2.2), "mudmultiply(1.1, 2.2)");
+           (TroughSplit (Int 3, Int 4), "troughsplit(3, 4)");
+           (PenPen (Int 5, Int 6), "penpen(5, 6)");
+           (Ppen (Boolean true, Boolean false), "ppen(true, false)");
+           (PenSnatch (Int 7, Int 8), "PenSnatch(7, 8)");
+           (PenSqueal (Int 9), "PenSqueal(9)");
+           (PenLength (Pen [ Int 10; Int 11 ]), "PenLength(pen: [10, 11])");
+           (Float 0.0, "0.0");
+         ]
+
+let test_oink_sub =
+  "test_oink_sub" >:: fun _ ->
+  let env = Hashtbl.create 10 in
+  Hashtbl.add env "x" (Int 42);
+  Hashtbl.add env "y" (Int 10);
+
+  (* Test Ident match *)
+  let result = oink_sub "x" (Int 100) (Ident "x") env in
+  assert_equal (Int 100) result ~printer:string_of_val;
+
+  (* Test Ident no match *)
+  let result = oink_sub "x" (Int 100) (Ident "y") env in
+  assert_equal (Ident "y") result ~printer:string_of_val;
+
+  (* Test Oink with id match *)
+  let expr = Oink ("x", Ident "x", Int 5) in
+  let result = oink_sub "x" (Int 100) expr env in
+  assert_equal (Oink ("x", Int 100, Int 5)) result ~printer:string_of_val;
+
+  (* Test Oink with id no match *)
+  let expr = Oink ("z", Ident "y", Int 5) in
+  let result = oink_sub "x" (Int 100) expr env in
+  assert_equal (Oink ("z", Ident "y", Int 5)) result ~printer:string_of_val;
+
+  (* Test other expression *)
+  let expr = PigPile (Ident "x", Ident "y") in
+  let result = oink_sub "x" (Int 100) expr env in
+  assert_equal
+    (eval (PigPile (Int 100, Ident "y")) env)
+    result ~printer:string_of_val
+
+let combined_tests =
+  all_tests @ more_func_tests @ [ test_string_of_val; test_oink_sub ]
+
 let tests = "test suite" >::: combined_tests
-
-let pen_tests =
-  [
-    ( "test penfilter operation" >:: fun _ ->
-      let result =
-        interp
-          "workhorse filter_fn x # if x = 2 {oink f = true;} else {oink f = \
-           false;} baaa f#"
-      in
-      let _ =
-        interp "oink filtered_list = [1; 2; 3; 4] penfilter go! filter_fn;"
-      in
-      let evaluated_res = interp "filtered_list" in
-      assert_equal "Squeal" result ~printer:(fun x -> x);
-      assert_equal "pen: [3, 4]" evaluated_res ~printer:(fun x -> x) );
-  ]
-
 let _ = run_test_tt_main tests

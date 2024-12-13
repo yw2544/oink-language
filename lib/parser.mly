@@ -37,7 +37,7 @@
 %token LPAREN
 %token CONCAT
 
-%nonassoc EQ LPAREN RPAREN
+%nonassoc EQ
 %left OR AND CONCAT
 %left PIGPILE SNOUTOUT 
 %left MUDMULTIPLY TROUGHSPLIT
@@ -60,7 +60,6 @@ prog:
 expr:
 | LPAREN e = expr RPAREN {e}
 | OINK id = IDENT EQ e1 = expr MUD e2 = expr {Oink (id, e1, e2)}
-// | OINK id = IDENT EQ e1 = expr {OinkGlob (id, e1)}
 | OINK id = IDENT EQ e1 = expr SEP {OinkGlob (id, e1)}
 | PEN_START PEN_END { Pen [] }  (* Handle empty list *)
 | PEN_START lst = expr_list PEN_END { Pen lst }  (* Handle non-empty list *)
@@ -83,7 +82,6 @@ expr:
 
 | WORKHORSE PEN_START lst = expr_list PEN_END GATE BAAA return=expr GATE {Workhorse (Pen lst,Squeal,return)} 
 | WORKHORSE PEN_START lst = expr_list PEN_END GATE body=separated_nonempty_list(SEP,expr) BAAA return=expr GATE {Workhorse (Pen lst,Pen body,return)} 
-| GO id= IDENT PEN_START lst = expr_list PEN_END {Go (id, Pen lst)}
 | GO id=IDENT x=expr {Go (id, x)}
 | id=IDENT { Ident id }
 | s = STRING {String s}
@@ -114,7 +112,6 @@ expr:
 | e1 = expr PPEN e2 = expr { Ppen (e1, e2) }
 | e1 = expr PENSNATCH e2 = expr { PenSnatch (e1, e2) }
 | e = expr PENSQUEAL {
-    print_endline "Parsed PenSqueal operation.";
     PenSqueal e
 }
 | e = expr PENLENGTH { PenLength (e) }
